@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Rustunit</title>
+  <link rel="stylesheet" href="/style.css">
+  {% if current_url %}
+  <link rel="canonical" href="{{ current_url | safe }}">
+  {% endif %}
+  <link rel="icon" href="/favicon.ico" sizes="any">
+
+  <script src="https://cdn.usefathom.com/script.js" data-site="TSUIPVAW" defer></script>
+</head>
+
+<body>
+  <header>
+    <nav>
+      <a href="/index.html"><img class="logo" src="/logo.png"></a>
+
+      {% for link in config.extra.ru_nav %}
+      <a href="{{ link.path | safe }}">{{ link.name }}</a>
+      {% endfor %}
+    </nav>
+    <hr>
+  </header>
+
+  <main>
+    {% block content %} {% endblock %}
+  </main>
+</body>
+
+</html>

@@ -3,10 +3,11 @@ $black: black;
 $dim-grey: #66666E;
 $grey: #9999A1;
 $platinum: #E6E6E9;
-$white: #F4F4F6;
+$bg: #F4F4F6;
+$blue: rgb(41, 41, 209);
 
 html {
-    background-color: $white;
+    background-color: $bg;
 }
 
 body {
@@ -26,6 +27,13 @@ header {
 
         a {
             text-decoration: none;
+        }
+
+        #contact {
+            background-color: $blue;
+            color: $platinum;
+            border-radius: 6px;
+            padding: 8px;
         }
     }
 }

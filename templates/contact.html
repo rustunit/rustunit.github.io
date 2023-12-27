@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form id="contactus" action="https://api.web3forms.com/submit" method="POST">
+
+    <h1>Contact us!</h1>
+
+    <input type="hidden" name="access_key" value="9e1b567e-b240-4bd7-8893-d733c5a6a951">
+    <input type="hidden" name="from_name" value="rustunit">
+
+    <p>Name</p>
+    <input type="text" name="name" required>
+    <p>EMail</p>
+    <input type="email" name="email" required>
+    <p>Message</p>
+    <textarea name="message" required></textarea>
+
+    <div class="h-captcha" data-captcha="true"></div>
+
+    <button type="submit">Submit Form</button>
+
+</form>
+<script src="https://web3forms.com/client/script.js" async defer></script>
+<script>
+    const form = document.getElementById('contactus');
+
+    form.addEventListener('submit', function (e) {
+
+        const hCaptcha = form.querySelector('textarea[name=h-captcha-response]').value;
+
+        if (!hCaptcha) {
+            e.preventDefault();
+            alert("Please fill out captcha field")
+            return
+        }
+    });
+</script>
+{% endblock content %}

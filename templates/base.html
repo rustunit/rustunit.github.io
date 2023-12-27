@@ -3,7 +3,10 @@
 
 <head>
   <meta charset="utf-8">
-  <title>Rustunit</title>
+  <title>{{config.title}}</title>
+  <meta name="description" content="{{config.description}}">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
   <link rel="stylesheet" href="/style.css">
   {% if current_url %}
   <link rel="canonical" href="{{ current_url | safe }}">
@@ -16,7 +19,7 @@
 <body>
   <header>
     <nav>
-      <a href="/"><img class="logo" src="/logo.svg"></a>
+      <a href="/"><img class="logo" src="/logo.svg" alt="rustunit logo"></a>
 
       {% for link in config.extra.ru_nav %}
       <a href="{{ link.path | safe }}">{{ link.name }}</a>

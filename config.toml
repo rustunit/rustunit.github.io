@@ -1,4 +1,6 @@
 base_url = "https://rustunit.com"
+title = "rustunit"
+description = "Rustunit offers software development consulting with a focus on rust, game-development and large scale distributed backend services."
 
 compile_sass = true
 build_search_index = false

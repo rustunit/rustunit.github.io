@@ -19,11 +19,13 @@
 <body>
   <header>
     <nav>
-      <a href="/"><img class="logo" src="/logo.svg" alt="rustunit logo"></a>
+      <a id="logo" href="/"><img src="/logo.svg" alt="rustunit logo"></a>
 
-      {% for link in config.extra.ru_nav %}
-      <a href="{{ link.path | safe }}">{{ link.name }}</a>
-      {% endfor %}
+      <div class="navbar">
+        {% for link in config.extra.ru_nav %}
+        <a href="{{ link.path | safe }}">{{ link.name }}</a>
+        {% endfor %}
+      </div>
 
       <a id="contact" href="/contact">Get in touch!</a>
     </nav>

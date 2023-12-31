@@ -13,6 +13,7 @@ html {
 body {
     font: 100% $font-stack;
     color: $black;
+    margin: 0px;
 }
 
 a {
@@ -20,6 +21,8 @@ a {
 }
 
 header {
+    margin: 8px;
+
     nav {
         .logo {
             width: 50px;

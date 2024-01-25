@@ -43,15 +43,20 @@ h2 {
     }
 }
 
+p {
+    margin: 5px;
+}
+
 img.portrait {
     box-sizing: border-box;
     border-radius: 50%;
-    border: 10px solid $color-foreground;
+    border: 2px solid black;
     margin: 2em 3em;
     width: 100%;
     height: auto;
     max-width: 300px;
     max-height: 300px;
+    background-color: white;
 }
 
 img.logo {

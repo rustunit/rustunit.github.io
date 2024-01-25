@@ -9,9 +9,10 @@ highlight_code = false
 
 [extra]
 links = [
-    { title = "E-Mail", url = "mailto:contact@rustunit.com", iconset = "fas", icon = "envelope" },
+    # { title = "Rotterdam, NL", url = "https://maps.app.goo.gl/vYh2kSC4BPaJymXDA", iconset = "fas", icon = "location-dot" },
+    { title = "Contact", url = "mailto:contact@rustunit.com", iconset = "fas", icon = "envelope" },
     { title = "GitHub", url = "https://github.com/rustunit", icon = "github" },
-    { title = "Twitter", url = "https://twitter.com/rustunitcom", icon = "twitter" },
-    { title = "LinkedIn", url = "https://www.linkedin.com/company/rustunit/", icon = "linkedin" },
+    # { title = "Twitter", url = "https://twitter.com/rustunitcom", icon = "twitter" },
+    # { title = "LinkedIn", url = "https://www.linkedin.com/company/rustunit/", icon = "linkedin" },
     { title = "Mastodon", url = "https://mastodon.social/@rustunit", icon = "mastodon" },
 ]

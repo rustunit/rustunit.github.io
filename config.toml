@@ -1,16 +1,17 @@
 base_url = "https://rustunit.com"
 title = "rustunit"
 description = "Rustunit offers software development consulting with a focus on rust, game-development and large scale distributed backend services."
-
 compile_sass = true
 build_search_index = false
 
 [markdown]
-highlight_code = true
+highlight_code = false
 
 [extra]
-ru_nav = [{ name = "HOME", path = "/" }, { name = "BLOG", path = "/blog/" }]
-ru_twitter = "rustunitcom"
-ru_github = "https://github.com/rustunit"
-ru_linkedin = "https://www.linkedin.com/company/rustunit/"
-ru_mastodon = "https://mastodon.social/@rustunit"
+links = [
+    { title = "E-Mail", url = "mailto:contact@rustunit.com", iconset = "fas", icon = "envelope" },
+    { title = "GitHub", url = "https://github.com/rustunit", icon = "github" },
+    { title = "Twitter", url = "https://twitter.com/rustunitcom", icon = "twitter" },
+    { title = "LinkedIn", url = "https://www.linkedin.com/company/rustunit/", icon = "linkedin" },
+    { title = "Mastodon", url = "https://mastodon.social/@rustunit", icon = "mastodon" },
+]

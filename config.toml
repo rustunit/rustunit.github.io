@@ -10,7 +10,7 @@ highlight_code = false
 [extra]
 links = [
     # { title = "Rotterdam, NL", url = "https://maps.app.goo.gl/vYh2kSC4BPaJymXDA", iconset = "fas", icon = "location-dot" },
-    { title = "Contact", url = "mailto:contact@rustunit.com", iconset = "fas", icon = "envelope" },
+    { title = "Contact", url = "/contact", iconset = "fas", icon = "envelope" },
     { title = "GitHub", url = "https://github.com/rustunit", icon = "github" },
     # { title = "Twitter", url = "https://twitter.com/rustunitcom", icon = "twitter" },
     # { title = "LinkedIn", url = "https://www.linkedin.com/company/rustunit/", icon = "linkedin" },

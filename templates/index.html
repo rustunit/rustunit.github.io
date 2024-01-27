@@ -1,50 +1,26 @@
-<!DOCTYPE html>
-<html>
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% block content %}
+<div class="column left">
+    <img src="{{ get_url(path='images/stephan.png') }}" class="portrait" alt="Portrait" />
+    <p>I am Stephan, Founder of Rustunit</p>
+</div>
+<div class="column right">
+    <img src="{{ get_url(path='images/logo.svg') }}" class="logo" alt="Rustunit" />
+    <p>Expertise in Software Development, IT Management Consulting, Open Source, Hiring and Training.</p>
 
-    <title>{{ config.title }}</title>
-    <meta name="description" content="{{config.description}}">
-
-    <link rel="stylesheet" href="{{ get_url(path='fonts.css') }}">
-    <link rel="stylesheet" href="{{ get_url(path='fontawesome/css/fontawesome.css') }}">
-    <link rel="stylesheet" href="{{ get_url(path='hallo.css') }}">
-
-    <script src="https://cdn.usefathom.com/script.js" data-site="TSUIPVAW" defer></script>
-</head>
-
-<body>
-    <main>
-        <div class="column left">
-            <img src="{{ get_url(path='images/stephan.png') }}" class="portrait" alt="Portrait" />
-            <p>I am Stephan, Founder of Rustunit</p>
-        </div>
-        <div class="column right">
-            <!-- <h1>Hello</h1> -->
-            <img src="{{ get_url(path='images/logo.svg') }}" class="logo" alt="Rustunit" />
-            <!-- <h2>Rust & Beyond</h2> -->
-            <p>Expertise in Software Development, IT Management Consulting, Open Source, Hiring and Training.</p>
-
-            {% if config.extra.links %}
-            <div class="links">
-                {% for link in config.extra.links %}
-                <a rel="me" href="{{ link.url }}" title="{{ link.title }}">
-                    {% if link.iconset %}
-                    <span class="{{ link.iconset }} {{ 'fa-' ~ link.icon }}"></span>
-                    {% else %}
-                    <span class="fab {{ 'fa-' ~ link.icon }}"></span>
-                    {% endif %}
-                </a>
-                {% endfor %}
-            </div>
+    {% if config.extra.links %}
+    <div class="links">
+        {% for link in config.extra.links %}
+        <a rel="me" href="{{ link.url }}" title="{{ link.title }}">
+            {% if link.iconset %}
+            <span class="{{ link.iconset }} {{ 'fa-' ~ link.icon }}"></span>
+            {% else %}
+            <span class="fab {{ 'fa-' ~ link.icon }}"></span>
             {% endif %}
-        </div>
-    </main>
-    <footer>
-        <div>Copyright © 2024 Rustunit B.V.</div>
-    </footer>
-</body>
-
-</html>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock content %}

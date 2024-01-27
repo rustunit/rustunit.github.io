@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{ config.title }}</title>
+    <meta name="description" content="{{config.description}}">
+
+    <link rel="stylesheet" href="{{ get_url(path='fonts.css') }}">
+    <link rel="stylesheet" href="{{ get_url(path='fontawesome/css/fontawesome.css') }}">
+    <link rel="stylesheet" href="{{ get_url(path='hallo.css') }}">
+
+    <script src="https://cdn.usefathom.com/script.js" data-site="TSUIPVAW" defer></script>
+</head>
+
+<body>
+    <main>
+        {% block content %} {% endblock %}
+    </main>
+    <footer>
+        <div>Copyright © 2024 Rustunit B.V.</div>
+    </footer>
+</body>
+
+</html>

@@ -1,26 +1,28 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="column left">
-    <img src="{{ get_url(path='images/stephan.png') }}" class="portrait" alt="Portrait" />
-    <p>I am Stephan, Founder of Rustunit</p>
-</div>
-<div class="column right">
-    <img src="{{ get_url(path='images/logo.svg') }}" class="logo" alt="Rustunit" />
-    <p>Expertise in Software Development, IT Management Consulting, Open Source, Hiring and Training.</p>
-
-    {% if config.extra.links %}
-    <div class="links">
-        {% for link in config.extra.links %}
-        <a rel="me" href="{{ link.url }}" title="{{ link.title }}">
-            {% if link.iconset %}
-            <span class="{{ link.iconset }} {{ 'fa-' ~ link.icon }}"></span>
-            {% else %}
-            <span class="fab {{ 'fa-' ~ link.icon }}"></span>
-            {% endif %}
-        </a>
-        {% endfor %}
+<main>
+    <div class="column left">
+        <img src="{{ get_url(path='images/stephan.png') }}" class="portrait" alt="Portrait" />
+        <p>I am Stephan, Founder of Rustunit</p>
     </div>
-    {% endif %}
-</div>
+    <div class="column right">
+        <img src="{{ get_url(path='images/logo.svg') }}" class="logo" alt="Rustunit" />
+        <p>Expertise in Software Development, IT Management Consulting, Open Source, Hiring and Training.</p>
+
+        {% if config.extra.links %}
+        <div class="links">
+            {% for link in config.extra.links %}
+            <a rel="me" href="{{ link.url }}" title="{{ link.title }}">
+                {% if link.iconset %}
+                <span class="{{ link.iconset }} {{ 'fa-' ~ link.icon }}"></span>
+                {% else %}
+                <span class="fab {{ 'fa-' ~ link.icon }}"></span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</main>
 {% endblock content %}

@@ -14,11 +14,7 @@
         <div class="links">
             {% for link in config.extra.links %}
             <a rel="me" href="{{ link.url }}" title="{{ link.title }}">
-                {% if link.iconset %}
-                <span class="{{ link.iconset }} {{ 'fa-' ~ link.icon }}"></span>
-                {% else %}
-                <span class="fab {{ 'fa-' ~ link.icon }}"></span>
-                {% endif %}
+                <img src="{{ get_url(path='icons/' ~ link.icon ~ '.svg') }}" />
             </a>
             {% endfor %}
         </div>

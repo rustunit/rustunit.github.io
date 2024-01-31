@@ -14,7 +14,7 @@
         <div class="links">
             {% for link in config.extra.links %}
             <a rel="me" href="{{ link.url }}" title="{{ link.title }}">
-                <img src="{{ get_url(path='icons/' ~ link.icon ~ '.svg') }}" />
+                <img alt="{{ link.title }}" class="icon" src="{{ get_url(path='icons/' ~ link.icon ~ '.svg') }}" />
             </a>
             {% endfor %}
         </div>

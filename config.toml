@@ -10,10 +10,11 @@ highlight_code = false
 [extra]
 links = [
     # { title = "Rotterdam, NL", url = "https://maps.app.goo.gl/vYh2kSC4BPaJymXDA", icon = "location-dot" },
+    { title = "LinkedIn", url = "https://www.linkedin.com/company/rustunit/", icon = "linkedin" },
     { title = "Contact", url = "/contact", icon = "mail" },
     { title = "GitHub", url = "https://github.com/rustunit", icon = "github" },
+    { title = "YouTube", url = "https://www.youtube.com/@rustunit_com", icon = "youtube" },
     # { title = "Twitter", url = "https://twitter.com/rustunitcom", icon = "twitter" },
-    { title = "LinkedIn", url = "https://www.linkedin.com/company/rustunit/", icon = "linkedin" },
     { title = "Mastodon", url = "https://mastodon.social/@rustunit", icon = "mastodon" },
     { title = "Discord", url = "https://discord.gg/rZv4uxSQx3", icon = "discord" },
 ]

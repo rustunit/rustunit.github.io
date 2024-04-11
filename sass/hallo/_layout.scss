@@ -2,6 +2,17 @@
     flex: 1;
 }
 
+header {
+    text-align: right;
+    margin-right: 40px;
+
+    a {
+        font-size: 22px;
+        text-decoration: none;
+        margin-left: 22px;
+    }
+}
+
 main {
     display: flex;
     margin-top: 5vh;

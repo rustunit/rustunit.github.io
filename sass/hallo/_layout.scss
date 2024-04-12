@@ -11,6 +11,15 @@ header {
         text-decoration: none;
         margin-left: 22px;
     }
+
+    @media screen and (max-width: $break-large) {
+        margin-right: 0px;
+
+        a {
+            font-size: 16px;
+            margin-left: 12px;
+        }
+    }
 }
 
 main {
@@ -79,9 +88,10 @@ main {
 
 .apps {
     margin-top: 25px;
+    text-align: center;
 
     p {
-        padding-left: 90px;
+        // padding-left: 90px;
         font-size: x-large;
         margin-top: 40px;
         margin-bottom: 40px;
@@ -90,7 +100,7 @@ main {
     .row {
         display: flex;
         justify-content: center;
-        column-gap: 130px;
+        column-gap: 60px;
 
         .app {
             text-decoration: none;

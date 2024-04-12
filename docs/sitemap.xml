@@ -4,6 +4,19 @@
         <loc>https://rustunit.com/</loc>
     </url>
     <url>
+        <loc>https://rustunit.com/blog/</loc>
+    </url>
+    <url>
+        <loc>https://rustunit.com/blog/2024/</loc>
+    </url>
+    <url>
+        <loc>https://rustunit.com/blog/2024/hello-world/</loc>
+        <lastmod>2024-04-11</lastmod>
+    </url>
+    <url>
+        <loc>https://rustunit.com/blog/drafts/</loc>
+    </url>
+    <url>
         <loc>https://rustunit.com/contact/</loc>
     </url>
 </urlset>

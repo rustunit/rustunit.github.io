@@ -3,14 +3,22 @@
 {% block content %}
 <div id="blog">
     <h1>Blog</h1>
-    <ul>
+    <div class="posts">
         {% for page in section.pages %}
-        <li>
-            <a href="{{ page.permalink | safe }}">{{ page.title }}</a>
+        <div class="post">
+            <div class="date">{{ page.date }}</div>
+            <a href="{{ page.permalink | safe }}">
+                <div class="title">{{ page.title }}</div>
+            </a>
+            <div class="tags">
+                {% for tag in page.extra.tags %}
+                <div class="tag">{{ tag }}</div>
+                {% endfor %}
+            </div>
             <div class="summary">{{ page.summary | safe }}</div>
-
-        </li>
+            <hr />
+        </div>
         {% endfor %}
-    </ul>
+    </div>
 </div>
 {% endblock content %}

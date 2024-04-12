@@ -1,6 +1,9 @@
 +++
-title = "My first post"
-date = 2019-11-27
+title = "Zoolitaire Release: Our first Bevy Game"
+date = 2024-04-12
+draft = true
+[extra]
+tags=["#rust","#gamedev"] 
 +++
 
 This is my first blog post. 

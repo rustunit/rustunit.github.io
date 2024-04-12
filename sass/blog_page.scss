@@ -11,5 +11,26 @@
         margin-top: 10px;
     }
 
+    .content {
+        .banner {
+            width: 100%;
+            text-align: center;
+        }
 
+        h1 {
+            font-size: 28px;
+        }
+
+        p {
+            margin: 8px 0px 8px 0px;
+        }
+
+        blockquote {
+            background-color: color(srgb 0.156 0.4348 0.52);
+            margin-left: 0px;
+            padding: 1px 0px 1px 10px;
+            border-left: 5px white solid;
+            font-style: italic;
+        }
+    }
 }

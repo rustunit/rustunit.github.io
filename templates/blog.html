@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="blog">
+    <h1>Blog</h1>
+    <div class="posts">
+        {% for page in section.pages %}
+        <div class="post">
+            <div class="date">{{ page.date }}</div>
+            <a href="{{ page.permalink | safe }}">
+                <div class="title">{{ page.title }}</div>
+            </a>
+            <div class="tags">
+                {% for tag in page.extra.tags %}
+                <div class="tag">{{ tag }}</div>
+                {% endfor %}
+            </div>
+            <div class="summary">{{ page.summary | safe }}</div>
+            <hr />
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock content %}

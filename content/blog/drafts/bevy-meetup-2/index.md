@@ -10,7 +10,7 @@ We are closing in on the third ever virtual [Bevy Meetup on April 18th](https://
 
 <!-- more -->
 
-<div class="banner"><img src="meetup-banner.png" alt="meetup banner" style="width: 70%"/></div>
+<div class="banner"><a href="https://www.meetup.com/bevy-game-development/events/300167964/"><img src="meetup-banner.png" alt="meetup banner" style="width: 80%"/></a></div>
 
 # Why
 

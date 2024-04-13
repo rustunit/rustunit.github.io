@@ -3,7 +3,7 @@
 
     .date {
         font-size: 14px;
-        color: #ffffff94;
+        color: rgba(255, 255, 255, 0.7);
     }
 
     .title {
@@ -15,6 +15,12 @@
         .banner {
             width: 100%;
             text-align: center;
+
+            img {
+                margin: 20px;
+                border-radius: 15px;
+                box-shadow: 2px 2px 10px #0000008f;
+            }
         }
 
         h1 {
@@ -25,12 +31,17 @@
             margin: 8px 0px 8px 0px;
         }
 
+        a {
+            font-weight: bold;
+        }
+
         blockquote {
-            background-color: color(srgb 0.156 0.4348 0.52);
+            background-color: rgb(38, 107, 130);
             margin-left: 0px;
             padding: 1px 0px 1px 10px;
             border-left: 5px white solid;
             font-style: italic;
+            color: #a2a2a2;
         }
     }
 }

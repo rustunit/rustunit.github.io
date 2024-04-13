@@ -21,20 +21,22 @@
         {% endif %}
     </div>
 </main>
-<div class="apps" id="games">
-    <p>
-        Our Mobile Games:
-    </p>
+<main>
+    <div class="apps column left" id="games">
+        <p>
+            Our Mobile Games:
+        </p>
 
-    <div class="row">
-        <a href="https://zoolitaire.com" class="app">
-            <img src="{{ get_url(path='images/zoolitaire.png') }}" alt="zoolitaire icon" />
-            <div>zoolitaire.com</div>
-        </a>
-        <a href="https://tinytakeoff.com" class="app">
-            <img src="{{ get_url(path='images/tinytakeoff.png') }}" alt="tinytakeoff icon" />
-            <div>tinytakeoff.com</div>
-        </a>
+        <div class="row">
+            <a href="https://zoolitaire.com" class="app">
+                <img src="{{ get_url(path='images/zoolitaire.png') }}" alt="zoolitaire icon" />
+                <div>zoolitaire.com</div>
+            </a>
+            <a href="https://tinytakeoff.com" class="app">
+                <img src="{{ get_url(path='images/tinytakeoff.png') }}" alt="tinytakeoff icon" />
+                <div>tinytakeoff.com</div>
+            </a>
+        </div>
     </div>
-</div>
+</main>
 {% endblock content %}

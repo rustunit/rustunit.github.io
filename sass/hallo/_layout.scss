@@ -28,9 +28,12 @@ main {
 
     .column.left {
         text-align: center;
+        max-width: 50%;
     }
 
     .column.right {
+        max-width: 50%;
+
         h1 {
             margin-left: -10px;
             /* Correction for margin of leftmost character. */

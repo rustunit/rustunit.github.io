@@ -14,7 +14,7 @@ We are closing in on the third ever virtual [Bevy Meetup on April 18th](https://
 
 # Why
 
-Starting a virtual Meetup seemed the natural next step for the growing and maturing community of the Bevy Game Engine: More and more high quality projects are in development ([Jarl](https://www.jarl-game.com), [Times of Progress](https://store.steampowered.com/app/2628450/Times_of_Progress/), [Dead Money](https://www.deadmoney.gg)), lots of games released based on Bevy ([Cats Melon](https://apps.apple.com/app/id6478646325), [Geoguessr](https://apps.apple.com/us/app/geoguessr/id1049876497), our very own [Zoolitaire](https://zoolitaire)) and the [Bevy Foundation](https://bevyengine.org/news/bevy-foundation/) being established it felt like the right time to foster more Bevy focused conference-style content. 
+Starting a virtual Meetup seemed the natural next step for the growing and maturing community of the [Bevy Game Engine](https://bevyengine.org): More and more high quality projects are in development ([Jarl](https://www.jarl-game.com), [Times of Progress](https://store.steampowered.com/app/2628450/Times_of_Progress/), [Dead Money](https://www.deadmoney.gg)), lots of games released based on Bevy ([Cats Melon](https://apps.apple.com/app/id6478646325), [Geoguessr](https://apps.apple.com/us/app/geoguessr/id1049876497), our very own [Zoolitaire](https://zoolitaire)) and the [Bevy Foundation](https://bevyengine.org/news/bevy-foundation/) being established it felt like the right time to foster more Bevy focused conference-style content. 
 
 > "The goal: Empower everyone in the community to interactively share."
 

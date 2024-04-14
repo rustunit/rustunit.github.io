@@ -24,7 +24,10 @@ Hosting and organizing this feels like providing a SaaS that is supposed to redu
 
 # How
 
-* remote
+* Remote
+
+    The community is getting big ()
+
 * live Q&A
 * using Streamyard
 * youtube live streaming
@@ -33,8 +36,8 @@ Hosting and organizing this feels like providing a SaaS that is supposed to redu
 
 # Learnings
 
-* short short shor
-* make it as easy as possible for presenters to participate
+* less is more
+* make it as easy as possible for presenters
 
 # What
 

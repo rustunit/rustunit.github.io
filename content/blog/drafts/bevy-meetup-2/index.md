@@ -6,7 +6,7 @@ draft = false
 tags=["rust","bevy","gamedev"] 
 +++
 
-We are closing in on the third ever virtual [Bevy Meetup on April 18th](https://www.meetup.com/bevy-game-development/events/300167964/). Time to look back and review the goals set and achieved.
+We are closing in on the third-ever virtual [Bevy Meetup on April 18th](https://www.meetup.com/bevy-game-development/events/300167964/). Time to look back and review.
 
 <!-- more -->
 
@@ -15,15 +15,16 @@ We are closing in on the third ever virtual [Bevy Meetup on April 18th](https://
 # Why
 
 Starting a virtual meetup seemed the natural next step for the growing and maturing community of the [Bevy Game Engine](https://bevyengine.org):
+The engine's Discord counts **~19k** members and **~33k** stars on Github.
 
-* The engines Discord counts **~19k** members and **~33k** stars on Github.
+<a href="zoolitaire.com" style="width: 20%" class="app-icon"><img src="zoolitaire.png" alt="panel"/>zoolitaire.com</a>
 
 * More and more high quality projects are in development: 
 
     * [Jarl](https://www.jarl-game.com)
     * [Times of Progress](https://store.steampowered.com/app/2628450/Times_of_Progress/)
     * [Dead Money](https://www.deadmoney.gg)
-    * [Tiny Glade](https://store.steampowered.com/app/2198150/Tiny_Glade/) (uses only parts)
+    * [Tiny Glade](https://store.steampowered.com/app/2198150/Tiny_Glade/) (using bevy parts)
 
 * A lot of games were already released based on Bevy: [Cats Melon](https://apps.apple.com/app/id6478646325), [Geoguessr](https://apps.apple.com/us/app/geoguessr/id1049876497), our very own [Zoolitaire](https://zoolitaire).
 

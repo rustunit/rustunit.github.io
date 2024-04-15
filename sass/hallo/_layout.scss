@@ -32,8 +32,6 @@ main {
     }
 
     .column.right {
-        max-width: 50%;
-
         h1 {
             margin-left: -10px;
             /* Correction for margin of leftmost character. */
@@ -68,6 +66,7 @@ main {
 
         .column.left {
             text-align: center;
+            max-width: 100%;
         }
 
         .column.right {
@@ -79,7 +78,9 @@ main {
         }
 
         img.portrait {
-            margin: 1em 2em;
+            margin: 0;
+            margin-top: 1em;
+            margin-bottom: 1em;
         }
 
         img.logo {

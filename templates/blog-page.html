@@ -3,6 +3,9 @@
 {% block content %}
 <div id="blogpage">
     <div class="date">{{ page.date }}</div>
+    {% if page.extra.hidden %}
+    <div class="hidden">hidden</div>
+    {% endif %}
     <h1 class="title">
         {{ page.title }}
     </h1>

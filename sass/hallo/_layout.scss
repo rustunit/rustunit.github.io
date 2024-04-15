@@ -43,21 +43,6 @@ main {
             /* Correction for margin of leftmost character. */
             margin-top: 0;
         }
-
-        .links {
-            margin-top: 2.5rem;
-            font-size: 1.5rem;
-
-            a {
-                margin-right: 0.5rem;
-                text-decoration: none;
-            }
-
-            img {
-                width: 34px;
-                height: 34px;
-            }
-        }
     }
 
     @media screen and (max-width: $break-large) {
@@ -86,6 +71,26 @@ main {
         img.logo {
             margin: 1em 2em;
             width: 42%;
+        }
+    }
+
+    .contact {
+        display: flex;
+        justify-content: center;
+
+        a {
+            display: flex;
+            text-decoration: none;
+
+            img {
+                margin-top: 4px;
+            }
+
+            .contact-us {
+                display: inline;
+                text-decoration: underline;
+                margin-left: 6px;
+            }
         }
     }
 }
@@ -118,11 +123,26 @@ main {
 
 footer {
     display: flex;
-    margin-top: 7rem;
+    margin-top: 6rem;
     font-size: 0.75rem;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
 
     @media screen and (max-width: $break-large) {
         // flex-direction: column;
+    }
+
+    .links {
+        font-size: 1.5rem;
+
+        a {
+            margin-right: 0.5rem;
+            text-decoration: none;
+        }
+
+        img {
+            width: 28px;
+            height: 28px;
+        }
     }
 }

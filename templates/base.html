@@ -23,6 +23,16 @@
     </header>
     {% block content %} {% endblock %}
     <footer>
+        {% if config.extra.links %}
+        <div class="links">
+            {% for link in config.extra.links %}
+            <a rel="me" href="{{ link.url }}" title="{{ link.title }}">
+                <img alt="{{ link.title }}" class="icon" src="{{ get_url(path='icons/' ~ link.icon ~ '.svg') }}" />
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <div>Copyright © 2024 Rustunit B.V.</div>
     </footer>
 </body>

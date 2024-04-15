@@ -3,13 +3,65 @@
 
     .date {
         font-size: 14px;
-        color: #ffffff94;
+        color: rgba(255, 255, 255, 0.7);
     }
 
     .title {
-        font-size: 40px;
+        font-size: 45px;
         margin-top: 10px;
     }
 
+    .content {
+        .banner {
+            width: 100%;
+            text-align: center;
 
+            img {
+                margin: 20px;
+                border-radius: 15px;
+                box-shadow: 2px 2px 10px #0000008f;
+            }
+        }
+
+        h1 {
+            font-size: 30px;
+        }
+
+        p {
+            margin: 8px 0px 8px 0px;
+        }
+
+        a {
+            font-style: italic;
+        }
+
+        blockquote {
+            background-color: rgb(38, 107, 130);
+            margin-left: 0px;
+            padding: 1px 0px 1px 10px;
+            border-left: 5px white solid;
+            font-style: italic;
+            color: #a2a2a2;
+        }
+
+        .app-icon {
+            float: right;
+            margin: 5px;
+            width: 20%;
+            text-align: center;
+
+            img {
+                width: 100%;
+                border-radius: 50px;
+                box-shadow: 2px 2px 10px #0000008f;
+            }
+        }
+
+        .inline-img {
+            float: right;
+            margin: 5px;
+            border-radius: 15px;
+            box-shadow: 2px 2px 10px #0000008f;
+        }
+    }
 }

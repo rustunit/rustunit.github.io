@@ -6,7 +6,7 @@
     align-items: center;
 
     h1 {
-        font-size: 30pt;
+        font-size: 36pt;
         text-align: center;
     }
 
@@ -28,18 +28,19 @@
 
             .title {
                 font-size: 30px;
+                font-weight: bold;
             }
 
             .date {
                 font-size: 12px;
-                color: #ffffff94;
+                color: rgba(255, 255, 255, 0.7);
             }
 
             .summary p {
                 margin-left: 0px;
                 // margin-top: 10px;
                 margin-bottom: 0px;
-                font-size: 14px;
+                font-size: 16px;
             }
 
             .tags {

@@ -10,15 +10,12 @@
         <img src="{{ get_url(path='images/logo.svg') }}" class="logo" alt="Rustunit" />
         <p>Expertise in Software Development, IT Management Consulting, Open Source, Hiring and Training.</p>
 
-        {% if config.extra.links %}
-        <div class="links">
-            {% for link in config.extra.links %}
-            <a rel="me" href="{{ link.url }}" title="{{ link.title }}">
-                <img alt="{{ link.title }}" class="icon" src="{{ get_url(path='icons/' ~ link.icon ~ '.svg') }}" />
+        <div class="contact">
+            <a rel="me" href="{{ get_url(path='@/contact.md')  }}" title="contact">
+                <img alt="contact" class="icon" src="{{ get_url(path='icons/mail.svg') }}" />
+                <div class="contact-us">Contact us!</div>
             </a>
-            {% endfor %}
         </div>
-        {% endif %}
     </div>
 </main>
 <main>

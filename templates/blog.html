@@ -5,6 +5,7 @@
     <h1>Blog</h1>
     <div class="posts">
         {% for page in section.pages %}
+        {% if not page.extra.hidden %}
         <div class="post">
             <div class="date">{{ page.date }}</div>
             <a href="{{ page.permalink | safe }}">
@@ -18,6 +19,7 @@
             <div class="summary">{{ page.summary | safe }}</div>
             <hr />
         </div>
+        {% endif %}
         {% endfor %}
     </div>
 </div>

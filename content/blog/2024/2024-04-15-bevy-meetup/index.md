@@ -1,9 +1,10 @@
 +++
 title = "Virtual Bevy Meetups"
-date = 2024-04-13
+date = 2024-04-15
 draft = false
 [extra]
 tags=["rust","bevy","gamedev"] 
+hidden = true
 +++
 
 We are closing in on the third-ever virtual [Bevy Meetup on April 18th](https://www.meetup.com/bevy-game-development/events/300167964/). Time to look back and review.

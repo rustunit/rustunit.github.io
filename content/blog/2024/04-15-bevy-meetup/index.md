@@ -4,10 +4,10 @@ date = 2024-04-15
 draft = false
 [extra]
 tags=["rust","bevy","gamedev"] 
-hidden = true
+hidden = false
 +++
 
-We are closing in on the third-ever virtual [Bevy Meetup on April 18th](https://www.meetup.com/bevy-game-development/events/300167964/). Time to look back and review.
+We are closing in on the third-ever virtual [Bevy Meetup on April 18th](https://www.meetup.com/bevy-game-development/events/300167964/). Time to look back and review why and how it started.
 
 <!-- more -->
 
@@ -49,7 +49,7 @@ Hosting and organizing this feels like providing a SaaS that is supposed to redu
 
 * **Live Streaming**
 
-    Live Online Events have a bunch of options for how to conduct these events and by learning from prior art done for the [rust game dev meetup](https://www.youtube.com/@RustGameDevelopment) we chose to use [Streamyard](https://streamyard.com) which allows us to easily manage a live stage and backstage to get a seamless experience for the live stream audience plus great recording quality for later publishing.
+    Live Online Events have a bunch of options for how to conduct these events and by learning from prior art done for the [rust game dev meetup](https://www.youtube.com/@RustGameDevelopment) we chose to use [Streamyard](https://streamyard.com) which allows us to easily manage a live stage and backstage to get a seamless experience for the live stream audience plus great recording quality for later publishing. Find all the streams on the [Rustunit Youtube Channel](http://youtube.com/@rustunit_com).
 
 * **No Zoom/GoogleMeet etc.**
 

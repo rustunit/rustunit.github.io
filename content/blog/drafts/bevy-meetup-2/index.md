@@ -14,6 +14,8 @@ We are closing in on the third-ever virtual [Bevy Meetup on April 18th](https://
 
 # Why
 
+> "The goal: Empower everyone in the community to interactively share."
+
 Starting a virtual meetup seemed the natural next step for the growing and maturing community of the [Bevy Game Engine](https://bevyengine.org):
 The engine's Discord counts **~19k** members and **~33k** stars on GitHub.
 
@@ -31,8 +33,6 @@ The engine's Discord counts **~19k** members and **~33k** stars on GitHub.
 * Last but not least the [Bevy Foundation](https://bevyengine.org/news/bevy-foundation/) is now established.
 
 It just felt like the right time to foster more Bevy-focused conference-style content. 
-
-> "The goal: Empower everyone in the community to interactively share."
 
 There are plenty of great content creators on Youtube sharing amazing things about Bevy but a Meetup enables more people in the community to get a voice that do not want to start a Youtube or Twitch career.
 
@@ -93,6 +93,10 @@ Organizing this is fun but also work, work done for free. If you like the format
 ### In-person conference
 
 The vision is to eventually be able to lift this to the next level and start an in-person BevyCon conference.
+
+# Testimonials
+
+<div class="banner"><a href="https://www.meetup.com/bevy-game-development/events/300167964/"><img src="testimonials.png" alt="testimonials" style="width: 80%"/></a></div>
 
 # Missed anything?
 

@@ -164,4 +164,6 @@ We developed and published [bevy_libgdx_atlas](https://github.com/rustunit/bevy_
 so everyone can just generate texture atlases using the libgdx format 
 and [GUI tool](https://github.com/crashinvaders/gdx-texture-packer-gui) inside Bevy projects.
 
-Find the flags example in action in our game [tinytakeoff.com](https://tinytakeoff.com)
+Find the flags example in action in our game [tinytakeoff.com](https://tinytakeoff.com):
+
+<a href="https://tinytakeoff.com" target="_blank"><img src="tiny.png" alt="tinytakeoff flags example" style="max-width: 30%" class="centered bordered" /></a>

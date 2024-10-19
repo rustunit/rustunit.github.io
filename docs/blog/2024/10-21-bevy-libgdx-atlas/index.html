@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>rustunit</title>
+    <meta name="description" content="Rustunit offers software development consulting with a focus on rust, game-development and large scale distributed backend services.">
+
+    <link rel="stylesheet" href="https://rustunit.com/fonts.css">
+    <link rel="stylesheet" href="https://rustunit.com/style.css">
+
+    <script src="https://cdn.usefathom.com/script.js" data-site="TSUIPVAW" defer></script>
+</head>
+
+<body>
+    <header>
+        <a href="https://rustunit.com/">HOME</a>
+        <a href="https://rustunit.com/#games">GAMES</a>
+        <a href="https://rustunit.com/blog/">BLOG</a>
+        <a href="https://rustunit.com/contact/">CONTACT</a>
+    </header>
+    
+<div id="blogpage">
+    <div class="date">2024-10-21</div>
+    
+    <div class="hidden">hidden</div>
+    
+    <h1 class="title">
+        Using libgdx texture atlas in Bevy
+    </h1>
+    <div class="content">
+        <h1 id="what-is-a-texture-atlas">What is a Texture-Atlas?</h1>
+<p><a href="https://opengameart.org/content/dungeon-crawl-32x32-tiles" target="_blank"><img src="example-atlas.png" alt="example atlas" style="max-width: 40%" class="inline-img" /></a>
+You have most certainly seen texture atlases before when using asset kits like the one on the right (taken from <a href="https://opengameart.org/content/dungeon-crawl-32x32-tiles">opengameart.org</a>):</p>
+<p>They come in a lot of different formats, arrangements and sizes, some or square, some are not, often everything is arranged in a regular grid but it could also appear as if it is a tightly packed chaos where sometimes items are even rotated to pack as closely as possible.</p>
+<p>Let's start with <em>why</em> we use them.</p>
+<blockquote>
+<p>Want to skip right to the chase? Find the <a href="https://rustunit.com/blog/2024/10-21-bevy-libgdx-atlas/#tldr">TL;DR</a> at the end of the post.</p>
+</blockquote>
+<h1 id="what-is-it-good-for">What is it good for?</h1>
+<p>Texture Atlases in games serve the purpose of reducing <em>draw calls</em>. This is when a set of geometry uses the same material and can therefore be batched together and send to the GPU in one rendering call (aka draw call). I am simplifying here but one of the major reasons two pieces of geometry cannot be batched together are if they are using a different texture.</p>
+<p>Especially in the past or on arcane hardware (i am looking at you Android) there was also the reason of combining non-power-of-two textures together in an atlas to reduce texture space waste.</p>
+<h1 id="how-to-use-an-atlas-in-bevy">How to use an atlas in Bevy ?</h1>
+<p><img src="https://rustunit.com/blog/2024/10-21-bevy-libgdx-atlas/./gabe-idle-run.png" alt="character-animation" /></p>
+<p>If we have an atlas arranged in a uniform grid like the above character animation (taken from the bevy examples <a href="https://github.com/bevyengine/bevy/blob/5c759a1be800209f537bea31d32b8ba7e966b0c1/assets/textures/rpg/chars/gabe/gabe-idle-run.png">assets</a>),
+then using such an atlas is quiet easy right out of the box in Bevy:</p>
+<pre data-lang="rs" style="background-color:#2b303b;color:#c0c5ce;" class="language-rs "><code class="language-rs" data-lang="rs"><span style="color:#b48ead;">let</span><span> texture_handle = asset_server.</span><span style="color:#96b5b4;">load</span><span>(&quot;</span><span style="color:#a3be8c;">textures/rpg/chars/gabe/gabe-idle-run.png</span><span>&quot;);
+</span><span style="color:#b48ead;">let</span><span> texture_atlas = TextureAtlasLayout::from_grid(UVec2::splat(</span><span style="color:#d08770;">24</span><span>), </span><span style="color:#d08770;">7</span><span>, </span><span style="color:#d08770;">1</span><span>, None, None);
+</span><span style="color:#b48ead;">let</span><span> texture_atlas_handle = texture_atlases.</span><span style="color:#96b5b4;">add</span><span>(texture_atlas);
+</span><span>
+</span><span>commands.</span><span style="color:#96b5b4;">spawn</span><span>((
+</span><span>    ImageBundle {
+</span><span>        </span><span style="color:#65737e;">//...
+</span><span>    },
+</span><span>    TextureAtlas::from(texture_atlas_handle),
+</span><span>));
+</span></code></pre>
+<blockquote>
+<p>See this in action in this <a href="https://bevyengine.org/examples/ui-user-interface/ui-texture-atlas/">bevy example <code>ui_texture_atlas.rs</code></a></p>
+</blockquote>
+<p><em>Now how do we handle a Texture-Atlas that is not arranged in a regular grid?</em></p>
+<p>Let's look at the definition of <code>TextureAtlasLayout</code>:</p>
+<pre data-lang="rs" style="background-color:#2b303b;color:#c0c5ce;" class="language-rs "><code class="language-rs" data-lang="rs"><span style="color:#b48ead;">pub struct </span><span>TextureAtlasLayout {
+</span><span>    </span><span style="color:#b48ead;">pub </span><span style="color:#bf616a;">size</span><span>: UVec2,
+</span><span>    </span><span style="color:#b48ead;">pub </span><span style="color:#bf616a;">textures</span><span>: Vec&lt;URect&gt;,
+</span><span>    </span><span style="color:#65737e;">/* private fields */
+</span><span>}
+</span></code></pre>
+<p>So the answer is: we just need to somehow list all the different rects that can be used as an idividual texture in this big atlas.</p>
+<p>This is where we have to figure out how to generate an atlas in the first place.</p>
+<h1 id="how-to-generate-an-atlas">How to generate an atlas?</h1>
+<p>There a two major ways to do this: <strong>offline</strong> and <strong>online</strong>.</p>
+<p><strong>Online</strong> means we combine textures at runtime into an atlas, for example when loading a level, choosing what textures will be needed and then combining them into a single texture atlas. Bevy supports doing that already using <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.TextureAtlasBuilder.html">TextureAtlasBuilder</a>.</p>
+<p><strong>Offline</strong> means we want to author our texture atlas before shipping the game. This has the advantage of not having to pay the runtime costs of doing this. For assets where the use cases are clear this is obviously reducing loading times, CPU usage and peak memory usage on constraint platforms like mobile and web.</p>
+<p>In this article we deal with the <strong>offline</strong> case.</p>
+<p>One mature tool that allows combining single textures into an atlas is <a href="https://github.com/crashinvaders/gdx-texture-packer-gui">gdx-texture-packer-gui</a> originally developed for <a href="https://libgdx.com">libgdx</a>.</p>
+<img src="flags.png" alt="gdx atlas packer GUI example" class="centered" style="max-width: 70%"/>
+<p>In the above screenshot you see the tool in action. We add a whole long list of source files on the left and the packer generates the packed texture on the right.</p>
+<p>It also generates an <code>atlas</code> file that looks like this:</p>
+<pre data-lang="atlas" style="background-color:#2b303b;color:#c0c5ce;" class="language-atlas "><code class="language-atlas" data-lang="atlas"><span>flags.png
+</span><span>size:1024,512
+</span><span>repeat:none
+</span><span>ae
+</span><span>bounds:684,126,60,60
+</span><span>ag
+</span><span>bounds:64,250,60,60
+</span><span>ai
+</span><span>bounds:374,250,60,60
+</span><span>am
+</span><span>bounds:932,436,60,60
+</span></code></pre>
+<p>Now this is something we can have Bevy ingest as an <code>Asset</code>!</p>
+<h1 id="how-to-load-the-generated-libgdx-atlas-in-bevy">How to load the generated libgdx atlas in Bevy?</h1>
+<p>Bevy allows us to load custom asset formats by implementing the <code>AssetLoader</code> trait like this:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#bf616a;">derive</span><span>(Default)]
+</span><span style="color:#b48ead;">struct </span><span>CustomAssetLoader;
+</span><span style="color:#b48ead;">impl </span><span>AssetLoader </span><span style="color:#b48ead;">for </span><span>CustomAssetLoader {
+</span><span>    </span><span style="color:#b48ead;">type </span><span>Asset = CustomAsset;
+</span><span>    </span><span style="color:#b48ead;">type </span><span>Settings = ();
+</span><span>    </span><span style="color:#b48ead;">type </span><span>Error = ();
+</span><span>    
+</span><span>    async </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">load</span><span>&lt;</span><span style="color:#b48ead;">&#39;a</span><span>&gt;(
+</span><span>        &amp;</span><span style="color:#b48ead;">&#39;a </span><span style="color:#bf616a;">self</span><span>,
+</span><span>        </span><span style="color:#bf616a;">reader</span><span>: &amp;</span><span style="color:#b48ead;">&#39;a mut </span><span>Reader&lt;&#39;_&gt;,
+</span><span>        </span><span style="color:#bf616a;">_settings</span><span>: &amp;</span><span style="color:#b48ead;">&#39;a </span><span>(),
+</span><span>        </span><span style="color:#bf616a;">_load_context</span><span>: &amp;</span><span style="color:#b48ead;">&#39;a mut </span><span>LoadContext&lt;&#39;_&gt;,
+</span><span>    ) -&gt; Result&lt;</span><span style="color:#b48ead;">Self::</span><span>Asset, </span><span style="color:#b48ead;">Self::</span><span>Error&gt; {
+</span><span>        </span><span style="color:#b48ead;">let mut</span><span> bytes = Vec::new();
+</span><span>        reader.</span><span style="color:#96b5b4;">read_to_end</span><span>(&amp;</span><span style="color:#b48ead;">mut</span><span> bytes).await.</span><span style="color:#96b5b4;">unwrap</span><span>();
+</span><span>        </span><span style="color:#65737e;">// load bytes from file here
+</span><span>        Ok(CustomAsset)
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">extensions</span><span>(&amp;</span><span style="color:#bf616a;">self</span><span>) -&gt; &amp;[&amp;</span><span style="color:#b48ead;">str</span><span>] {
+</span><span>        &amp;[&quot;</span><span style="color:#a3be8c;">custom</span><span>&quot;]
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    App::new()
+</span><span>        .</span><span style="color:#96b5b4;">add_plugins</span><span>(DefaultPlugins)
+</span><span>        .init_asset::&lt;CustomAsset&gt;()
+</span><span>        .init_asset_loader::&lt;CustomAssetLoader&gt;()
+</span><span>        .</span><span style="color:#96b5b4;">run</span><span>();
+</span><span>}
+</span></code></pre>
+<p>This snippet above leaves out how to actually parse the file format we have seen above but it illustrates how easy it is to register a custom asset loader for files with the extension <code>.custom</code>. Find the full example provided in the <a href="https://bevyengine.org/examples/assets/custom-asset/">bevy repository</a>.</p>
+<p>Now we did the work of implementing a custom asset loader for the libgdx atlas format for you in the <a href="https://github.com/rustunit/bevy_libgdx_atlas">bevy_libgdx_atlas</a> crate. The asset itself looks like this:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">pub struct </span><span>LibGdxAtlasAsset {
+</span><span>    </span><span style="color:#65737e;">/// The texture atlas image.
+</span><span>    </span><span style="color:#b48ead;">pub </span><span style="color:#bf616a;">image</span><span>: Handle&lt;Image&gt;,
+</span><span>    </span><span style="color:#65737e;">/// The texture atlas layout.
+</span><span>    </span><span style="color:#b48ead;">pub </span><span style="color:#bf616a;">atlas</span><span>: Handle&lt;TextureAtlasLayout&gt;,
+</span><span>    </span><span style="color:#65737e;">/// The map of the original file names to indices of the texture atlas.
+</span><span>    </span><span style="color:#b48ead;">pub </span><span style="color:#bf616a;">files</span><span>: HashMap&lt;String, </span><span style="color:#b48ead;">usize</span><span>&gt;,
+</span><span>}
+</span></code></pre>
+<p>Now this allows us to lookup the original texture (like <code>us.png</code>) inside the <code>files</code> hashmap and use the associated index to set the texture used from the <code>TextureAtlasLayout</code> (remember the <code>textures</code> vector with the right bounds of the sprite?).</p>
+<blockquote>
+<p>Find a full example of how to use <code>bevy_libgdx_atlas</code> in the <a href="https://github.com/rustunit/bevy_libgdx_atlas/blob/main/examples/animation.rs">repo's example</a>.</p>
+</blockquote>
+<h1 id="further-thoughts">Further Thoughts</h1>
+<p>Bevy at some point will feature an extendable editor and then we can build something like Unity's <a href="https://docs.unity3d.com/Manual/sprite/atlas/workflow/optimize-sprite-atlas-usage-size-improved-performance.html">Sprite Atlas</a> feature which will allow us to include the functionality of <code>gdx-texture-packer-gui</code> right into the Bevy editor. </p>
+<p>And if I may dream on maybe we can even replicate the comfort of Unity allowing us to reference the original sprites in the editor and then under the hood adapts the references to use the regions inside the generated sprite atlas. <em>dreaming</em></p>
+<h1 id="tldr">TL;DR</h1>
+<p>We developed and published <a href="https://github.com/rustunit/bevy_libgdx_atlas">bevy_libgdx_atlas</a> 
+so everyone can just generate texture atlases using the libgdx format 
+and <a href="https://github.com/crashinvaders/gdx-texture-packer-gui">GUI tool</a> inside Bevy projects.</p>
+<p>Find the flags example in action in our game <a href="https://tinytakeoff.com">tinytakeoff.com</a></p>
+
+    </div>
+</div>
+
+    <footer>
+        
+        <div class="links">
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.linkedin.com&#x2F;company&#x2F;rustunit&#x2F;" title="LinkedIn">
+                <img alt="LinkedIn" class="icon" src="https://rustunit.com/icons/linkedin.svg" />
+            </a>
+            
+            <a rel="me" href="&#x2F;contact" title="Contact">
+                <img alt="Contact" class="icon" src="https://rustunit.com/icons/mail.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;github.com&#x2F;rustunit" title="GitHub">
+                <img alt="GitHub" class="icon" src="https://rustunit.com/icons/github.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.youtube.com&#x2F;@rustunit_com" title="YouTube">
+                <img alt="YouTube" class="icon" src="https://rustunit.com/icons/youtube.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;mastodon.social&#x2F;@rustunit" title="Mastodon">
+                <img alt="Mastodon" class="icon" src="https://rustunit.com/icons/mastodon.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;discord.gg&#x2F;rZv4uxSQx3" title="Discord">
+                <img alt="Discord" class="icon" src="https://rustunit.com/icons/discord.svg" />
+            </a>
+            
+        </div>
+        
+
+        <div>Copyright © 2024 Rustunit B.V.</div>
+    </footer>
+</body>
+
+</html>

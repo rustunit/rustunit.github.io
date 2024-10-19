@@ -16,7 +16,7 @@
                 <div class="tag">{{ tag }}</div>
                 {% endfor %}
             </div>
-            <div class="summary">{{ page.summary | safe }}</div>
+            <div class="summary">{{ page.extra.custom_summary | safe }}</div>
             <hr />
         </div>
         {% endif %}

@@ -57,7 +57,7 @@ pub struct TextureAtlasLayout {
 }
 ```
 
-So the answer is: we just need to somehow list all the different rects that can be used as an idividual texture in this big atlas.
+So the answer is: we just need to somehow list all the different rects that can be used as an individual texture in this big atlas.
 
 This is where we have to figure out how to generate an atlas in the first place.
 

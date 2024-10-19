@@ -12,7 +12,7 @@ custom_summary = "What is a texture atlas? Learn how to generate and use one in 
 <a href="https://opengameart.org/content/dungeon-crawl-32x32-tiles" target="_blank"><img src="example-atlas.png" alt="example atlas" style="max-width: 40%" class="inline-img" /></a>
 You have most certainly seen texture atlases before when using asset kits like the one on the right (taken from [opengameart.org](https://opengameart.org/content/dungeon-crawl-32x32-tiles)):
 
-They come in a lot of different formats, arrangements and sizes, some or square, some are not, often everything is arranged in a regular grid but it could also appear as if it is a tightly packed chaos where sometimes items are even rotated to pack as closely as possible.
+They come in many different formats, arrangements, and sizes. Some are square, some are not. Often, everything is arranged in a regular grid, but it could also appear as if it is a tightly packed chaos, where sometimes items are even rotated to pack as closely as possible.
 
 Let's start with *why* we use them.
 
@@ -29,7 +29,7 @@ Especially in the past or on arcane hardware (i am looking at you Android) there
 ![character-animation](./gabe-idle-run.png)
 
 If we have an atlas arranged in a uniform grid like the above character animation (taken from the bevy examples [assets](https://github.com/bevyengine/bevy/blob/5c759a1be800209f537bea31d32b8ba7e966b0c1/assets/textures/rpg/chars/gabe/gabe-idle-run.png)),
-then using such an atlas is quiet easy right out of the box in Bevy:
+then using such an atlas is quite easy right out of the box in Bevy:
 
 ```rs
 let texture_handle = asset_server.load("textures/rpg/chars/gabe/gabe-idle-run.png");
@@ -69,7 +69,7 @@ There a two major ways to do this: **offline** and **online**.
 
 **Offline** means we want to author our texture atlas before shipping the game. This has the advantage of not having to pay the runtime costs of doing this. For assets where the use cases are clear this is obviously reducing loading times, CPU usage and peak memory usage on constraint platforms like mobile and web.
 
-In this article we deal with the **offline** case.
+In this article, we deal with the **offline** case.
 
 One mature tool that allows combining single textures into an atlas is [gdx-texture-packer-gui](https://github.com/crashinvaders/gdx-texture-packer-gui) originally developed for [libgdx](https://libgdx.com).
 
@@ -133,7 +133,7 @@ fn main() {
 }
 ```
 
-This snippet above leaves out how to actually parse the file format we have seen above but it illustrates how easy it is to register a custom asset loader for files with the extension `.custom`. Find the full example provided in the [bevy repository](https://bevyengine.org/examples/assets/custom-asset/).
+This snippet above leaves out how to parse the file format we have seen above but it illustrates how easy it is to register a custom asset loader for files with the extension `.custom`. Find the full example provided in the [bevy repository](https://bevyengine.org/examples/assets/custom-asset/).
 
 Now we did the work of implementing a custom asset loader for the libgdx atlas format for you in the [bevy_libgdx_atlas](https://github.com/rustunit/bevy_libgdx_atlas) crate. The asset itself looks like this:
 
@@ -156,7 +156,7 @@ Now this allows us to lookup the original texture (like `us.png`) inside the `fi
 
 Bevy at some point will feature an extendable editor and then we can build something like Unity's [Sprite Atlas](https://docs.unity3d.com/Manual/sprite/atlas/workflow/optimize-sprite-atlas-usage-size-improved-performance.html) feature which will allow us to include the functionality of `gdx-texture-packer-gui` right into the Bevy editor. 
 
-And if I may dream on maybe we can even replicate the comfort of Unity allowing us to reference the original sprites in the editor and then under the hood adapts the references to use the regions inside the generated sprite atlas. *dreaming*
+And if I may dream maybe we can even replicate the comfort of Unity allowing us to reference the original sprites in the editor and then under the hood adapt the references to use the regions inside the generated sprite atlas. *dreaming*
 
 # TL;DR {#tldr}
 

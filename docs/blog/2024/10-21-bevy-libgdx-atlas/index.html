@@ -34,7 +34,7 @@
         <h1 id="what-is-a-texture-atlas">What is a Texture-Atlas?</h1>
 <p><a href="https://opengameart.org/content/dungeon-crawl-32x32-tiles" target="_blank"><img src="example-atlas.png" alt="example atlas" style="max-width: 40%" class="inline-img" /></a>
 You have most certainly seen texture atlases before when using asset kits like the one on the right (taken from <a href="https://opengameart.org/content/dungeon-crawl-32x32-tiles">opengameart.org</a>):</p>
-<p>They come in a lot of different formats, arrangements and sizes, some or square, some are not, often everything is arranged in a regular grid but it could also appear as if it is a tightly packed chaos where sometimes items are even rotated to pack as closely as possible.</p>
+<p>They come in many different formats, arrangements, and sizes. Some are square, some are not. Often, everything is arranged in a regular grid, but it could also appear as if it is a tightly packed chaos, where sometimes items are even rotated to pack as closely as possible.</p>
 <p>Let's start with <em>why</em> we use them.</p>
 <blockquote>
 <p>Want to skip right to the chase? Find the <a href="https://rustunit.com/blog/2024/10-21-bevy-libgdx-atlas/#tldr">TL;DR</a> at the end of the post.</p>
@@ -45,7 +45,7 @@ You have most certainly seen texture atlases before when using asset kits like t
 <h1 id="how-to-use-an-atlas-in-bevy">How to use an atlas in Bevy ?</h1>
 <p><img src="https://rustunit.com/blog/2024/10-21-bevy-libgdx-atlas/./gabe-idle-run.png" alt="character-animation" /></p>
 <p>If we have an atlas arranged in a uniform grid like the above character animation (taken from the bevy examples <a href="https://github.com/bevyengine/bevy/blob/5c759a1be800209f537bea31d32b8ba7e966b0c1/assets/textures/rpg/chars/gabe/gabe-idle-run.png">assets</a>),
-then using such an atlas is quiet easy right out of the box in Bevy:</p>
+then using such an atlas is quite easy right out of the box in Bevy:</p>
 <pre data-lang="rs" style="background-color:#2b303b;color:#c0c5ce;" class="language-rs "><code class="language-rs" data-lang="rs"><span style="color:#b48ead;">let</span><span> texture_handle = asset_server.</span><span style="color:#96b5b4;">load</span><span>(&quot;</span><span style="color:#a3be8c;">textures/rpg/chars/gabe/gabe-idle-run.png</span><span>&quot;);
 </span><span style="color:#b48ead;">let</span><span> texture_atlas = TextureAtlasLayout::from_grid(UVec2::splat(</span><span style="color:#d08770;">24</span><span>), </span><span style="color:#d08770;">7</span><span>, </span><span style="color:#d08770;">1</span><span>, None, None);
 </span><span style="color:#b48ead;">let</span><span> texture_atlas_handle = texture_atlases.</span><span style="color:#96b5b4;">add</span><span>(texture_atlas);
@@ -74,7 +74,7 @@ then using such an atlas is quiet easy right out of the box in Bevy:</p>
 <p>There a two major ways to do this: <strong>offline</strong> and <strong>online</strong>.</p>
 <p><strong>Online</strong> means we combine textures at runtime into an atlas, for example when loading a level, choosing what textures will be needed and then combining them into a single texture atlas. Bevy supports doing that already using <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.TextureAtlasBuilder.html">TextureAtlasBuilder</a>.</p>
 <p><strong>Offline</strong> means we want to author our texture atlas before shipping the game. This has the advantage of not having to pay the runtime costs of doing this. For assets where the use cases are clear this is obviously reducing loading times, CPU usage and peak memory usage on constraint platforms like mobile and web.</p>
-<p>In this article we deal with the <strong>offline</strong> case.</p>
+<p>In this article, we deal with the <strong>offline</strong> case.</p>
 <p>One mature tool that allows combining single textures into an atlas is <a href="https://github.com/crashinvaders/gdx-texture-packer-gui">gdx-texture-packer-gui</a> originally developed for <a href="https://libgdx.com">libgdx</a>.</p>
 <img src="flags.png" alt="gdx atlas packer GUI example" class="centered" style="max-width: 70%"/>
 <p>In the above screenshot you see the tool in action. We add a whole long list of source files on the left and the packer generates the packed texture on the right.</p>
@@ -126,7 +126,7 @@ then using such an atlas is quiet easy right out of the box in Bevy:</p>
 </span><span>        .</span><span style="color:#96b5b4;">run</span><span>();
 </span><span>}
 </span></code></pre>
-<p>This snippet above leaves out how to actually parse the file format we have seen above but it illustrates how easy it is to register a custom asset loader for files with the extension <code>.custom</code>. Find the full example provided in the <a href="https://bevyengine.org/examples/assets/custom-asset/">bevy repository</a>.</p>
+<p>This snippet above leaves out how to parse the file format we have seen above but it illustrates how easy it is to register a custom asset loader for files with the extension <code>.custom</code>. Find the full example provided in the <a href="https://bevyengine.org/examples/assets/custom-asset/">bevy repository</a>.</p>
 <p>Now we did the work of implementing a custom asset loader for the libgdx atlas format for you in the <a href="https://github.com/rustunit/bevy_libgdx_atlas">bevy_libgdx_atlas</a> crate. The asset itself looks like this:</p>
 <pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#b48ead;">pub struct </span><span>LibGdxAtlasAsset {
 </span><span>    </span><span style="color:#65737e;">/// The texture atlas image.
@@ -143,7 +143,7 @@ then using such an atlas is quiet easy right out of the box in Bevy:</p>
 </blockquote>
 <h1 id="further-thoughts">Further Thoughts</h1>
 <p>Bevy at some point will feature an extendable editor and then we can build something like Unity's <a href="https://docs.unity3d.com/Manual/sprite/atlas/workflow/optimize-sprite-atlas-usage-size-improved-performance.html">Sprite Atlas</a> feature which will allow us to include the functionality of <code>gdx-texture-packer-gui</code> right into the Bevy editor. </p>
-<p>And if I may dream on maybe we can even replicate the comfort of Unity allowing us to reference the original sprites in the editor and then under the hood adapts the references to use the regions inside the generated sprite atlas. <em>dreaming</em></p>
+<p>And if I may dream maybe we can even replicate the comfort of Unity allowing us to reference the original sprites in the editor and then under the hood adapt the references to use the regions inside the generated sprite atlas. <em>dreaming</em></p>
 <h1 id="tldr">TL;DR</h1>
 <p>We developed and published <a href="https://github.com/rustunit/bevy_libgdx_atlas">bevy_libgdx_atlas</a> 
 so everyone can just generate texture atlases using the libgdx format 

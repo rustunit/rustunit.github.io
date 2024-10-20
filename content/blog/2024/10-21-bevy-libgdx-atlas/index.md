@@ -7,6 +7,8 @@ hidden = true
 custom_summary = "What is a texture atlas? Learn how to generate and use one in Bevy"
 +++
 
+A Texture-Atlases (used synonymously for Sprite-Atlas and Sprite-Sheet in the following) are an old and well-established tool in our game-dev tool box. This article helps you understand what they are, why they are useful and how to use them in a Bevy project.
+
 # What is a Texture-Atlas?
 
 <a href="https://opengameart.org/content/dungeon-crawl-32x32-tiles" target="_blank"><img src="example-atlas.png" alt="example atlas" style="max-width: 40%" class="inline-img" /></a>
@@ -167,3 +169,5 @@ and [GUI tool](https://github.com/crashinvaders/gdx-texture-packer-gui) inside B
 Find the flags example in action in our game [tinytakeoff.com](https://tinytakeoff.com):
 
 <a href="https://tinytakeoff.com" target="_blank"><img src="tiny.png" alt="tinytakeoff flags example" style="max-width: 30%" class="centered bordered" /></a>
+
+If you are looking to build your next project (game or not) in Bevy we can support you with our team of Bevy experts

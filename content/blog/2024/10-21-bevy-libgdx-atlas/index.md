@@ -24,7 +24,7 @@ Let's start with *why* we use them.
 
 Texture Atlases in games serve the purpose of reducing *draw calls*. This is when a set of geometry uses the same material and can therefore be batched together and send to the GPU in one rendering call (aka draw call). I am simplifying here but one of the major reasons two pieces of geometry cannot be batched together are if they are using a different texture.
 
-Especially in the past or on arcane hardware (i am looking at you Android) there was also the reason of combining non-power-of-two textures together in an atlas to reduce texture space waste.
+Especially in the past or on arcane hardware (I am looking at you Android) there was also the reason of combining non-power-of-two textures together in an atlas to reduce texture space waste.
 
 # How to use an atlas in Bevy ?
 

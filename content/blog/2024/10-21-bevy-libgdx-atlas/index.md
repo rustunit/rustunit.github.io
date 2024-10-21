@@ -18,13 +18,13 @@ They come in many different formats, arrangements, and sizes. Some are square, s
 
 Let's start with *why* we use them.
 
-> Want to skip right to the chase? Find the [TL;DR](#tldr) at the end of the post.
+> Want to cut right to the chase? Find the [TL;DR](#tldr) at the end of the post.
 
 # What is it good for?
 
-Texture atlases in games serve the purpose of reducing *draw calls*. This is when a set of geometry uses the same material and can therefore be batched together and send to the GPU in one rendering call (aka draw call). I am simplifying here but one of the major reasons two pieces of geometry cannot be batched together are if they are using a different texture.
+Texture atlases in games serve the purpose of reducing *draw calls*. This is when a set of geometry uses the same texture and can therefore be batched together and send to the GPU in one rendering call (aka draw call). I am simplifying here but one of the major reasons two pieces of geometry cannot be batched is if they are using different textures.
 
-On hardware that only supports non-power-of-two textures using texture atlases allows you to reduce wasted memory. This is mostly an issue of the past unless you need to support arcane Adreno graphics chips (looking at you Android).
+On hardware that only supports power-of-two textures using texture atlases allows you to reduce wasted memory. This is mostly an issue of the past unless you need to support arcane Adreno graphics chips (looking at you Android).
 
 # How to use an atlas in Bevy ?
 

@@ -36,11 +36,11 @@ You have most certainly seen texture atlases before when using asset kits like t
 <p>They come in many different formats, arrangements, and sizes. Some are square, some are not. Often, everything is arranged in a regular grid, but it could also appear as if it is a tightly packed chaos, where sometimes items are even rotated to pack as closely as possible.</p>
 <p>Let's start with <em>why</em> we use them.</p>
 <blockquote>
-<p>Want to skip right to the chase? Find the <a href="https://rustunit.com/blog/2024/10-21-bevy-libgdx-atlas/#tldr">TL;DR</a> at the end of the post.</p>
+<p>Want to cut right to the chase? Find the <a href="https://rustunit.com/blog/2024/10-21-bevy-libgdx-atlas/#tldr">TL;DR</a> at the end of the post.</p>
 </blockquote>
 <h1 id="what-is-it-good-for">What is it good for?</h1>
-<p>Texture atlases in games serve the purpose of reducing <em>draw calls</em>. This is when a set of geometry uses the same material and can therefore be batched together and send to the GPU in one rendering call (aka draw call). I am simplifying here but one of the major reasons two pieces of geometry cannot be batched together are if they are using a different texture.</p>
-<p>On hardware that only supports non-power-of-two textures using texture atlases allows you to reduce wasted memory. This is mostly an issue of the past unless you need to support arcane Adreno graphics chips (looking at you Android).</p>
+<p>Texture atlases in games serve the purpose of reducing <em>draw calls</em>. This is when a set of geometry uses the same texture and can therefore be batched together and send to the GPU in one rendering call (aka draw call). I am simplifying here but one of the major reasons two pieces of geometry cannot be batched is if they are using different textures.</p>
+<p>On hardware that only supports power-of-two textures using texture atlases allows you to reduce wasted memory. This is mostly an issue of the past unless you need to support arcane Adreno graphics chips (looking at you Android).</p>
 <h1 id="how-to-use-an-atlas-in-bevy">How to use an atlas in Bevy ?</h1>
 <p><img src="https://rustunit.com/blog/2024/10-21-bevy-libgdx-atlas/./gabe-idle-run.png" alt="character-animation" /></p>
 <p>If we have an atlas arranged in a uniform grid like the above character animation (taken from the Bevy <a href="https://github.com/bevyengine/bevy/blob/5c759a1be800209f537bea31d32b8ba7e966b0c1/assets/textures/rpg/chars/gabe/gabe-idle-run.png">assets</a>),

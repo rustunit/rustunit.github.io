@@ -1,5 +1,5 @@
 +++
-title = "Using libgdx texture atlas in Bevy"
+title = "Using libgdx texture atlases in Bevy"
 date = 2024-10-21
 [extra]
 tags=["rust","bevy","gamedev"] 

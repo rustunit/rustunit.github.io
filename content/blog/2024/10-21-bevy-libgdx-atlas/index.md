@@ -3,13 +3,13 @@ title = "Using libgdx texture atlas in Bevy"
 date = 2024-10-21
 [extra]
 tags=["rust","bevy","gamedev"] 
-hidden = true
+hidden = false
 custom_summary = "What is a texture atlas? Learn how to generate and use one in Bevy"
 +++
 
-A Texture-Atlases (used synonymously for Sprite-Atlas and Sprite-Sheet in the following) are an old and well-established tool in our game-dev tool box. This article helps you understand what they are, why they are useful and how to use them in a Bevy project.
+A texture atlas (used synonymously for sprite atlas and sprite sheet in the following) is an old and well-established tool in our game-dev toolbox. This article helps you understand what they are, why they are useful, and how to use them in a Bevy project.
 
-# What is a Texture-Atlas?
+# What is a texture atlas?
 
 <a href="https://opengameart.org/content/dungeon-crawl-32x32-tiles" target="_blank"><img src="example-atlas.png" alt="example atlas" style="max-width: 40%" class="inline-img" /></a>
 You have most certainly seen texture atlases before when using asset kits like the one on the right (taken from [opengameart.org](https://opengameart.org/content/dungeon-crawl-32x32-tiles)):
@@ -22,15 +22,15 @@ Let's start with *why* we use them.
 
 # What is it good for?
 
-Texture Atlases in games serve the purpose of reducing *draw calls*. This is when a set of geometry uses the same material and can therefore be batched together and send to the GPU in one rendering call (aka draw call). I am simplifying here but one of the major reasons two pieces of geometry cannot be batched together are if they are using a different texture.
+Texture atlases in games serve the purpose of reducing *draw calls*. This is when a set of geometry uses the same material and can therefore be batched together and send to the GPU in one rendering call (aka draw call). I am simplifying here but one of the major reasons two pieces of geometry cannot be batched together are if they are using a different texture.
 
-Especially in the past or on arcane hardware (I am looking at you Android) there was also the reason of combining non-power-of-two textures together in an atlas to reduce texture space waste.
+On hardware that only supports non-power-of-two textures using texture atlases allows you to reduce wasted memory. This is mostly an issue of the past unless you need to support arcane Adreno graphics chips (looking at you Android).
 
 # How to use an atlas in Bevy ?
 
 ![character-animation](./gabe-idle-run.png)
 
-If we have an atlas arranged in a uniform grid like the above character animation (taken from the bevy examples [assets](https://github.com/bevyengine/bevy/blob/5c759a1be800209f537bea31d32b8ba7e966b0c1/assets/textures/rpg/chars/gabe/gabe-idle-run.png)),
+If we have an atlas arranged in a uniform grid like the above character animation (taken from the Bevy [assets](https://github.com/bevyengine/bevy/blob/5c759a1be800209f537bea31d32b8ba7e966b0c1/assets/textures/rpg/chars/gabe/gabe-idle-run.png)),
 then using such an atlas is quite easy right out of the box in Bevy:
 
 ```rs
@@ -45,9 +45,9 @@ commands.spawn((
     TextureAtlas::from(texture_atlas_handle),
 ));
 ```
-> See this in action in this [bevy example `ui_texture_atlas.rs`](https://bevyengine.org/examples/ui-user-interface/ui-texture-atlas/)
+> See this in action in this [Bevy example](https://bevyengine.org/examples/ui-user-interface/ui-texture-atlas/)
 
-*Now how do we handle a Texture-Atlas that is not arranged in a regular grid?*
+*Now how do we handle a texture atlas that is not arranged in a regular grid?*
 
 Let's look at the definition of `TextureAtlasLayout`:
 
@@ -95,7 +95,7 @@ am
 bounds:932,436,60,60
 ```
 
-Now this is something we can have Bevy ingest as an `Asset`!
+*This* is something we can have Bevy ingest as an `Asset`!
 
 # How to load the generated libgdx atlas in Bevy?
 
@@ -135,9 +135,9 @@ fn main() {
 }
 ```
 
-This snippet above leaves out how to parse the file format we have seen above but it illustrates how easy it is to register a custom asset loader for files with the extension `.custom`. Find the full example provided in the [bevy repository](https://bevyengine.org/examples/assets/custom-asset/).
+This snippet above leaves out how to parse the file format we have seen above but it illustrates how easy it is to register a custom asset loader for files with the extension `.custom`. Find the full example provided on the [Bevy website](https://bevyengine.org/examples/assets/custom-asset/).
 
-Now we did the work of implementing a custom asset loader for the libgdx atlas format for you in the [bevy_libgdx_atlas](https://github.com/rustunit/bevy_libgdx_atlas) crate. The asset itself looks like this:
+We implemented a custom asset loader for the libgdx atlas format in the [bevy_libgdx_atlas](https://github.com/rustunit/bevy_libgdx_atlas) crate. The asset itself looks like this:
 
 ```rust
 pub struct LibGdxAtlasAsset {
@@ -156,7 +156,7 @@ Now this allows us to lookup the original texture (like `us.png`) inside the `fi
 
 # Further Thoughts
 
-Bevy at some point will feature an extendable editor and then we can build something like Unity's [Sprite Atlas](https://docs.unity3d.com/Manual/sprite/atlas/workflow/optimize-sprite-atlas-usage-size-improved-performance.html) feature which will allow us to include the functionality of `gdx-texture-packer-gui` right into the Bevy editor. 
+Bevy at some point will feature an extendable editor and then we can build something like Unity's [SpriteAtlas](https://docs.unity3d.com/Manual/sprite/atlas/workflow/optimize-sprite-atlas-usage-size-improved-performance.html) feature which will allow us to include the functionality of `gdx-texture-packer-gui` right into the Bevy editor. 
 
 And if I may dream maybe we can even replicate the comfort of Unity allowing us to reference the original sprites in the editor and then under the hood adapt the references to use the regions inside the generated sprite atlas. *dreaming*
 
@@ -170,4 +170,4 @@ Find the flags example in action in our game [tinytakeoff.com](https://tinytakeo
 
 <a href="https://tinytakeoff.com" target="_blank"><img src="tiny.png" alt="tinytakeoff flags example" style="max-width: 30%" class="centered bordered" /></a>
 
-If you are looking to build your next project (game or not) in Bevy we can support you with our team of Bevy experts
+You need support building your Bevy or Rust project? Our team of experts can support you! [Contact us.](@/contact.md)

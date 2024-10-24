@@ -3,13 +3,12 @@ title = "Zoolitaire Release: Our first Bevy Game"
 date = 2024-04-12
 draft = true
 [extra]
-tags=["#rust","#gamedev"] 
+tags=["rust","gamedev"] 
+custom_summary = "TODO"
 +++
 
 This is my first blog post. 
 Lets make it count.
-
-<!-- more -->
 
 What can i write here?
 

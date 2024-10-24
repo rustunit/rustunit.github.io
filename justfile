@@ -1,6 +1,6 @@
 
 serve:
-	zola serve
+	zola serve --drafts
 
 build:
 	rm -rf docs/ | true

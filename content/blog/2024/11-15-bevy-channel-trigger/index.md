@@ -1,10 +1,10 @@
 +++
-title = "Extending Bevy with C: Communicating via FFI"
-date = 2024-11-14
+title = "Sending Events to Bevy from anywhere"
+date = 2024-11-15
 [extra]
 tags=["rust","bevy","gamedev"] 
 hidden = true
-custom_summary = "We released the bevy_channel_trigger crate to simplify communication between Bevy and foreign libraries or languages."
+custom_summary = "We released the bevy_channel_trigger crate to simplify communication from foreign libraries or languages to Bevy."
 +++
 
 In this short post we introduce the recently released [bevy_channel_trigger](https://crates.io/crates/bevy_channel_trigger) crate, why we need it to talk to foreign code and what it sets it apart from alternatives. If you just want to start using it, find it on [GitHub](https://github.com/rustunit/bevy_channel_trigger).
@@ -23,9 +23,13 @@ You can just call foreign functions of course right from your Bevy Systems but t
 
 This is where channels like [crossbeam](https://github.com/crossbeam-rs/crossbeam), [async-channel](https://docs.rs/async-channel/latest/async_channel/) or [flume](https://github.com/zesterer/flume) come in handy to communicate back into our Bevy game logic.
 
-Lets look at an example.
+Lets look at a very simple example.
 
 # Show me an example
+
+The this example we show how to define an Event type `MyEvent` (line **2**) 
+that we want to send as a reaction to a foreign function calling us 
+(via callbacks or whatever the mechanism).
 
 ```rust,linenos
 #[derive(Event)]
@@ -57,10 +61,6 @@ fn main() {
     app.run();
 }
 ```
-
-The above example shows how we define an Event type `MyEvent` (line **2**) 
-that we want to send as a reaction to a foreign function calling us 
-(via callbacks or whatever the mechanism).
 
 For the purposes of this example we simulate this by spinning off a 
 separate thread (line **14**) and passing `sender` into it. Since this is 

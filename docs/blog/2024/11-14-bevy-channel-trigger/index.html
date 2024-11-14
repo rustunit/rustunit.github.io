@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>rustunit</title>
+    <meta name="description" content="Rustunit offers software development consulting with a focus on rust, game-development and large scale distributed backend services.">
+
+    <link rel="stylesheet" href="https://rustunit.com/fonts.css">
+    <link rel="stylesheet" href="https://rustunit.com/style.css">
+
+    <script src="https://cdn.usefathom.com/script.js" data-site="TSUIPVAW" defer></script>
+</head>
+
+<body>
+    <header>
+        <a href="https://rustunit.com/">HOME</a>
+        <a href="https://rustunit.com/#games">GAMES</a>
+        <a href="https://rustunit.com/blog/">BLOG</a>
+        <a href="https://rustunit.com/contact/">CONTACT</a>
+    </header>
+    
+<div id="blogpage">
+    <div class="date">2024-11-14</div>
+    
+    <div class="hidden">hidden</div>
+    
+    <h1 class="title">
+        Extending Bevy with C: Communicating via FFI
+    </h1>
+    <div class="content">
+        <p>In this short post we introduce the recently released <a href="https://crates.io/crates/bevy_channel_trigger">bevy_channel_trigger</a> crate, why we need it to talk to foreign code and what it sets it apart from alternatives. If you just want to start using it, find it on <a href="https://github.com/rustunit/bevy_channel_trigger">GitHub</a>.</p>
+<h1 id="why">Why?</h1>
+<img src="schema.png" alt="schema" style="max-width: 50%" class="inline-img" />
+<p>Let's start with why we need to talk to C libraries or any other language in the first place. Bevy is written in Rust, Rust is great but not everything can be supported in Rust natively:</p>
+<ul>
+<li>maybe you want to interface with libraries that are closed source like Apple's native iOS libraries</li>
+<li>maybe you want to talk to web APIs using <a href="https://github.com/rustwasm/wasm-bindgen">wasm-bindgen</a> because your game runs on the web</li>
+<li>maybe because time is finite and you don't want to <a href="https://transitiontech.ca/random/RIIR">RiiR</a> (Rewrite it in Rust) all the way down</li>
+</ul>
+<p>You can just call foreign functions of course right from your Bevy Systems but that is often not a good idea as we don't want to block our game logic. Often these APIs are async as well which means they will produce a result sometime later that we then want to receive back in our Bevy Systems. The schema on the right visualizes this.</p>
+<p>This is where channels like <a href="https://github.com/crossbeam-rs/crossbeam">crossbeam</a>, <a href="https://docs.rs/async-channel/latest/async_channel/">async-channel</a> or <a href="https://github.com/zesterer/flume">flume</a> come in handy to communicate back into our Bevy game logic.</p>
+<p>Lets look at an example.</p>
+<h1 id="show-me-an-example">Show me an example</h1>
+<pre data-linenos data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><table><tbody><tr><td>1</td><td><span style="color:#89ddff;">#[</span><span>derive</span><span style="color:#89ddff;">(</span><span>Event</span><span style="color:#89ddff;">)]
+</span></td></tr><tr><td>2</td><td><span style="font-style:italic;color:#c792ea;">struct </span><span>MyEvent</span><span style="color:#89ddff;">(</span><span style="font-style:italic;color:#c792ea;">i32</span><span style="color:#89ddff;">);
+</span></td></tr><tr><td>3</td><td><span>
+</span></td></tr><tr><td>4</td><td><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">main</span><span style="color:#89ddff;">() {
+</span></td></tr><tr><td>5</td><td><span>    </span><span style="color:#c792ea;">use </span><span>bevy_channel_trigger</span><span style="color:#89ddff;">::</span><span>ChannelTriggerApp</span><span style="color:#89ddff;">;
+</span></td></tr><tr><td>6</td><td><span>
+</span></td></tr><tr><td>7</td><td><span>    </span><span style="font-style:italic;color:#c792ea;">let </span><span style="color:#c792ea;">mut</span><span> app </span><span style="color:#89ddff;">= </span><span>App</span><span style="color:#89ddff;">::</span><span>new</span><span style="color:#89ddff;">();
+</span></td></tr><tr><td>8</td><td><span>    app</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">add_plugins</span><span style="color:#89ddff;">(</span><span>MinimalPlugins</span><span style="color:#89ddff;">);
+</span></td></tr><tr><td>9</td><td><span>
+</span></td></tr><tr><td>10</td><td><span>    </span><span style="font-style:italic;color:#4a4a4a;">// create channel
+</span></td></tr><tr><td>11</td><td><span>    </span><span style="font-style:italic;color:#c792ea;">let</span><span> sender </span><span style="color:#89ddff;">=</span><span> app</span><span style="color:#89ddff;">.</span><span>add_channel_trigger</span><span style="color:#89ddff;">::&lt;</span><span>MyEvent</span><span style="color:#89ddff;">&gt;();
+</span></td></tr><tr><td>12</td><td><span>
+</span></td></tr><tr><td>13</td><td><span>    </span><span style="font-style:italic;color:#4a4a4a;">// use sender from anywhere:
+</span></td></tr><tr><td>14</td><td><span>    thread</span><span style="color:#89ddff;">::</span><span>spawn</span><span style="color:#89ddff;">(</span><span style="color:#c792ea;">move </span><span style="color:#89ddff;">|| {
+</span></td></tr><tr><td>15</td><td><span>        </span><span style="font-style:italic;color:#c792ea;">let </span><span style="color:#c792ea;">mut</span><span> counter </span><span style="color:#89ddff;">= </span><span style="color:#f78c6c;">1</span><span style="color:#89ddff;">;
+</span></td></tr><tr><td>16</td><td><span>        </span><span style="font-style:italic;color:#c792ea;">loop </span><span style="color:#89ddff;">{
+</span></td></tr><tr><td>17</td><td><span>            </span><span style="font-style:italic;color:#4a4a4a;">// send events back to bevy
+</span></td></tr><tr><td>18</td><td><span>            sender</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">send</span><span style="color:#89ddff;">(</span><span>MyEvent</span><span style="color:#89ddff;">(</span><span>counter</span><span style="color:#89ddff;">));
+</span></td></tr><tr><td>19</td><td><span>            thread</span><span style="color:#89ddff;">::</span><span>sleep</span><span style="color:#89ddff;">(</span><span>Duration</span><span style="color:#89ddff;">::</span><span>from_secs</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">1</span><span style="color:#89ddff;">));
+</span></td></tr><tr><td>20</td><td><span>            counter </span><span style="color:#89ddff;">+= </span><span style="color:#f78c6c;">1</span><span style="color:#89ddff;">;
+</span></td></tr><tr><td>21</td><td><span>        </span><span style="color:#89ddff;">}
+</span></td></tr><tr><td>22</td><td><span>    </span><span style="color:#89ddff;">});
+</span></td></tr><tr><td>23</td><td><span>
+</span></td></tr><tr><td>24</td><td><span>    </span><span style="font-style:italic;color:#4a4a4a;">// register an observer to receive the events sent via `sender`
+</span></td></tr><tr><td>25</td><td><span>    app</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">observe</span><span style="color:#89ddff;">(</span><span>on_event</span><span style="color:#89ddff;">);
+</span></td></tr><tr><td>26</td><td><span>
+</span></td></tr><tr><td>27</td><td><span>    app</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">run</span><span style="color:#89ddff;">();
+</span></td></tr><tr><td>28</td><td><span style="color:#89ddff;">}
+</span></td></tr></tbody></table></code></pre>
+<p>The above example shows how we define an Event type <code>MyEvent</code> (line <strong>2</strong>)
+that we want to send as a reaction to a foreign function calling us
+(via callbacks or whatever the mechanism).</p>
+<p>For the purposes of this example we simulate this by spinning off a
+separate thread (line <strong>14</strong>) and passing <code>sender</code> into it. Since this is
+a multiple-producers-single-consumer channel we can clone the sender
+as often as we want.</p>
+<p>The thread will send this event once a second (line <strong>18</strong>).
+We want Bevy systems to react to these Events.
+Therefore we register a observer (line <strong>25</strong>) that will trigger every
+time this event gets send.</p>
+<p>Let's look at the code of the observer:</p>
+<pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">on_event</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">trigger</span><span style="color:#89ddff;">: </span><span>Trigger</span><span style="color:#89ddff;">&lt;</span><span>MyEvent</span><span style="color:#89ddff;">&gt;) {
+</span><span>    </span><span style="font-style:italic;color:#c792ea;">let</span><span> event </span><span style="color:#89ddff;">=</span><span> trigger</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">event</span><span style="color:#89ddff;">();
+</span><span>    info!</span><span style="color:#89ddff;">(&quot;</span><span style="color:#c3e88d;">trigger with: {}</span><span style="color:#89ddff;">&quot;,</span><span> event</span><span style="color:#89ddff;">.</span><span style="color:#f78c6c;">0</span><span style="color:#89ddff;">);
+</span><span style="color:#89ddff;">}
+</span></code></pre>
+<p>Thanks to <code>bevy_channel_trigger</code> we can react to these Events now just
+like we would with any other Observer. In this example we simply trace
+this to the console.</p>
+<blockquote>
+<p>You can find a more elaborate example in this
+<a href="https://github.com/rustunit/bevy_web_drop_image_as_sprite">drop images into bevy on the web</a> demo.</p>
+</blockquote>
+<h1 id="how-does-crossbeam-flume-and-others-compare">How does crossbeam, flume and others compare</h1>
+<p>You might be wondering why we chose to use <strong>crossbeam</strong> here under the hood.</p>
+<p>First of all we abstracted that decision away and can easily exchange the
+underlying channel when we want to.</p>
+<p>As a matter of fact the initial implementation was using <strong>flume</strong>, but
+ultimately we decided to move to crossbeam because it is by far the most
+actively maintained channel implementation in Rust and creates less wasm size than flume.</p>
+<blockquote>
+<p>Flume seems actually more lean in direct comparison to crossbeam but by
+using flume we effectively add another dependency because Bevy itself already brings crossbeam along.</p>
+</blockquote>
+<p>Bevy also brings <strong>async-channel</strong> along surprisingly but just like flume
+it pales in comparison to crossbeam in regards to maintenance.</p>
+<h1 id="what-about-bevy-crossbeam-event">What about bevy_crossbeam_event?</h1>
+<p>Last but not least let's look at the alternative: <strong>bevy_crossbeam_channel</strong>
+We actually used this one before but it dates to a time when the only messaging
+system Bevy had was <code>EventWriter</code>/<code>EventReader</code>. These matter as they are more performant in cases where you want to send massive amounts of events at the expense of slightly less ergonomic event handling.</p>
+<p><strong>But</strong> for our use cases events are used to cross the language barrier primarily and we want to have maximum ergonomics in how to write handlers for these using the new Observer API.</p>
+<p>Migration of using <code>bevy_channel_trigger</code> in our crates like <a href="https://github.com/rustunit/bevy_web_popups">bevy_web_popups</a> has already begun an will be finished with the migration to bevy 0.15!</p>
+<hr />
+<p>You need support building your Bevy or Rust project? Our team of experts can support you! <a href="https://rustunit.com/contact/">Contact us.</a></p>
+
+    </div>
+</div>
+
+    <footer>
+        
+        <div class="links">
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.linkedin.com&#x2F;company&#x2F;rustunit&#x2F;" title="LinkedIn">
+                <img alt="LinkedIn" class="icon" src="https://rustunit.com/icons/linkedin.svg" />
+            </a>
+            
+            <a rel="me" href="&#x2F;contact" title="Contact">
+                <img alt="Contact" class="icon" src="https://rustunit.com/icons/mail.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;github.com&#x2F;rustunit" title="GitHub">
+                <img alt="GitHub" class="icon" src="https://rustunit.com/icons/github.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.youtube.com&#x2F;@rustunit_com" title="YouTube">
+                <img alt="YouTube" class="icon" src="https://rustunit.com/icons/youtube.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;mastodon.social&#x2F;@rustunit" title="Mastodon">
+                <img alt="Mastodon" class="icon" src="https://rustunit.com/icons/mastodon.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;discord.gg&#x2F;rZv4uxSQx3" title="Discord">
+                <img alt="Discord" class="icon" src="https://rustunit.com/icons/discord.svg" />
+            </a>
+            
+        </div>
+        
+
+        <div>Copyright © 2024 Rustunit B.V.</div>
+    </footer>
+</body>
+
+</html>

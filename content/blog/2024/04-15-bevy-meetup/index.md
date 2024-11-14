@@ -5,7 +5,7 @@ draft = false
 [extra]
 tags=["rust","bevy","gamedev"] 
 hidden = false
-custom_summary = "We are closing in on the third-ever virtual. Time to look back and review why and how it started."
+custom_summary = "We are closing in on the third-ever virtual Bevy Meetup. Time to look back and review why and how it started."
 +++
 
 We are closing in on the third-ever virtual [Bevy Meetup on April 18th](https://www.meetup.com/bevy-game-development/events/300167964/). Time to look back and review why and how it started.

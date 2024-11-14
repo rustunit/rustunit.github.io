@@ -9,9 +9,9 @@ custom_summary = "We released the bevy_channel_trigger crate to simplify communi
 
 In this short post we introduce the recently released [bevy_channel_trigger](https://crates.io/crates/bevy_channel_trigger) crate, why we need it to talk to foreign code and what it sets it apart from alternatives. If you just want to start using it, find it on [GitHub](https://github.com/rustunit/bevy_channel_trigger).
 
-# Why?
+<img src="schema.png" alt="schema" style="width: 50%; max-width: 500px" class="inline-img" />
 
-<img src="schema.png" alt="schema" style="max-width: 50%" class="inline-img" />
+# Why?
 
 Let's start with why we need to talk to C libraries or any other language in the first place. Bevy is written in Rust, Rust is great but not everything can be supported in Rust natively: 
 

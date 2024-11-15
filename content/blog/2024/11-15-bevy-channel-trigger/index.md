@@ -7,7 +7,10 @@ hidden = true
 custom_summary = "We released the bevy_channel_trigger crate to simplify communication from foreign libraries or languages to Bevy."
 +++
 
-In this short post we introduce the recently released [bevy_channel_trigger](https://crates.io/crates/bevy_channel_trigger) crate, why we need it to talk to foreign code and what it sets it apart from alternatives. If you just want to start using it, find it on [GitHub](https://github.com/rustunit/bevy_channel_trigger).
+In this short post we introduce the recently released 
+[bevy_channel_trigger](https://crates.io/crates/bevy_channel_trigger) crate, 
+why we need it to talk to foreign code and what sets it apart from alternatives. 
+If you just want to start using it, find it on [GitHub](https://github.com/rustunit/bevy_channel_trigger).
 
 <img src="schema.png" alt="schema" style="width: 50%; max-width: 500px" class="inline-img" />
 
@@ -27,9 +30,9 @@ Lets look at a very simple example.
 
 # Show me an example
 
-The this example we show how to define an Event type `MyEvent` (line **2**) 
+In this example we show how to define an Event type `MyEvent` (line **2**) 
 that we want to send as a reaction to a foreign function calling us 
-(via callbacks or whatever the mechanism).
+(via callbacks or any other mechanism).
 
 ```rust,linenos
 #[derive(Event)]
@@ -69,8 +72,8 @@ as often as we want.
 
 The thread will send this event once a second (line **18**). 
 We want Bevy systems to react to these Events. 
-Therefore we register a observer (line **25**) that will trigger every 
-time this event gets send.
+Therefore we register an observer (line **25**) that will trigger every 
+time this event gets sent.
 
 Let's look at the code of the observer:
 

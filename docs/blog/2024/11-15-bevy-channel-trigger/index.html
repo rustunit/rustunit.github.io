@@ -25,13 +25,14 @@
 <div id="blogpage">
     <div class="date">2024-11-15</div>
     
-    <div class="hidden">hidden</div>
-    
     <h1 class="title">
         Sending Events to Bevy from anywhere
     </h1>
     <div class="content">
-        <p>In this short post we introduce the recently released <a href="https://crates.io/crates/bevy_channel_trigger">bevy_channel_trigger</a> crate, why we need it to talk to foreign code and what it sets it apart from alternatives. If you just want to start using it, find it on <a href="https://github.com/rustunit/bevy_channel_trigger">GitHub</a>.</p>
+        <p>In this short post we introduce the recently released
+<a href="https://crates.io/crates/bevy_channel_trigger">bevy_channel_trigger</a> crate,
+why we need it to talk to foreign code and what sets it apart from alternatives.
+If you just want to start using it, find it on <a href="https://github.com/rustunit/bevy_channel_trigger">GitHub</a>.</p>
 <img src="schema.png" alt="schema" style="width: 50%; max-width: 500px" class="inline-img" />
 <h1 id="why">Why?</h1>
 <p>Let's start with why we need to talk to C libraries or any other language in the first place. Bevy is written in Rust, Rust is great but not everything can be supported in Rust natively:</p>
@@ -44,9 +45,9 @@
 <p>This is where channels like <a href="https://github.com/crossbeam-rs/crossbeam">crossbeam</a>, <a href="https://docs.rs/async-channel/latest/async_channel/">async-channel</a> or <a href="https://github.com/zesterer/flume">flume</a> come in handy to communicate back into our Bevy game logic.</p>
 <p>Lets look at a very simple example.</p>
 <h1 id="show-me-an-example">Show me an example</h1>
-<p>The this example we show how to define an Event type <code>MyEvent</code> (line <strong>2</strong>)
+<p>In this example we show how to define an Event type <code>MyEvent</code> (line <strong>2</strong>)
 that we want to send as a reaction to a foreign function calling us
-(via callbacks or whatever the mechanism).</p>
+(via callbacks or any other mechanism).</p>
 <pre data-linenos data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><table><tbody><tr><td>1</td><td><span style="color:#89ddff;">#[</span><span>derive</span><span style="color:#89ddff;">(</span><span>Event</span><span style="color:#89ddff;">)]
 </span></td></tr><tr><td>2</td><td><span style="font-style:italic;color:#c792ea;">struct </span><span>MyEvent</span><span style="color:#89ddff;">(</span><span style="font-style:italic;color:#c792ea;">i32</span><span style="color:#89ddff;">);
 </span></td></tr><tr><td>3</td><td><span>
@@ -82,8 +83,8 @@ a multiple-producers-single-consumer channel we can clone the sender
 as often as we want.</p>
 <p>The thread will send this event once a second (line <strong>18</strong>).
 We want Bevy systems to react to these Events.
-Therefore we register a observer (line <strong>25</strong>) that will trigger every
-time this event gets send.</p>
+Therefore we register an observer (line <strong>25</strong>) that will trigger every
+time this event gets sent.</p>
 <p>Let's look at the code of the observer:</p>
 <pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">on_event</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">trigger</span><span style="color:#89ddff;">: </span><span>Trigger</span><span style="color:#89ddff;">&lt;</span><span>MyEvent</span><span style="color:#89ddff;">&gt;) {
 </span><span>    </span><span style="font-style:italic;color:#c792ea;">let</span><span> event </span><span style="color:#89ddff;">=</span><span> trigger</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">event</span><span style="color:#89ddff;">();
@@ -103,16 +104,17 @@ this to the console.</p>
 underlying channel when we want to.</p>
 <p>As a matter of fact the initial implementation was using <strong>flume</strong>, but
 ultimately we decided to move to crossbeam because it is by far the most
-actively maintained channel implementation in Rust and creates less wasm size than flume.</p>
+actively maintained channel implementation in Rust and creates less
+big wasm-binaries compared to flume.</p>
 <blockquote>
 <p>Flume seems actually more lean in direct comparison to crossbeam but by
 using flume we effectively add another dependency because Bevy itself already brings crossbeam along.</p>
 </blockquote>
-<p>Bevy also brings <strong>async-channel</strong> along surprisingly but just like flume
+<p>Surprisingly, with <strong>async-channel</strong> Bevy brings it's <em>another</em> channel implementation, but just like flume
 it pales in comparison to crossbeam in regards to maintenance.</p>
 <h1 id="what-about-bevy-crossbeam-event">What about bevy_crossbeam_event?</h1>
 <p>Last but not least let's look at the alternative: <strong>bevy_crossbeam_channel</strong>
-We actually used this one before but it dates to a time when the only messaging
+We actually used this one before but it dates back to a time when the only messaging
 system Bevy had was <code>EventWriter</code>/<code>EventReader</code>. These matter as they are more performant in cases where you want to send massive amounts of events at the expense of slightly less ergonomic event handling.</p>
 <p><strong>But</strong> for our use cases events are used to cross the language barrier primarily and we want to have maximum ergonomics in how to write handlers for these using the new Observer API.</p>
 <p>Migration of using <code>bevy_channel_trigger</code> in our crates like <a href="https://github.com/rustunit/bevy_web_popups">bevy_web_popups</a> has already begun an will be finished with the migration to bevy 0.15!</p>

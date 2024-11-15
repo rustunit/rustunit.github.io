@@ -3,7 +3,7 @@ title = "Sending Events to Bevy from anywhere"
 date = 2024-11-15
 [extra]
 tags=["rust","bevy","gamedev"] 
-hidden = true
+hidden = false
 custom_summary = "We released the bevy_channel_trigger crate to simplify communication from foreign libraries or languages to Bevy."
 +++
 
@@ -100,18 +100,19 @@ underlying channel when we want to.
 
 As a matter of fact the initial implementation was using **flume**, but 
 ultimately we decided to move to crossbeam because it is by far the most 
-actively maintained channel implementation in Rust and creates less wasm size than flume.
+actively maintained channel implementation in Rust and creates less 
+big wasm-binaries compared to flume.
 
 > Flume seems actually more lean in direct comparison to crossbeam but by 
 using flume we effectively add another dependency because Bevy itself already brings crossbeam along.
 
-Bevy also brings **async-channel** along surprisingly but just like flume 
+Surprisingly, with **async-channel** Bevy brings it's *another* channel implementation, but just like flume 
 it pales in comparison to crossbeam in regards to maintenance.
 
 # What about bevy_crossbeam_event?
 
 Last but not least let's look at the alternative: **bevy_crossbeam_channel**
-We actually used this one before but it dates to a time when the only messaging 
+We actually used this one before but it dates back to a time when the only messaging 
 system Bevy had was `EventWriter`/`EventReader`. These matter as they are more performant in cases where you want to send massive amounts of events at the expense of slightly less ergonomic event handling.
 
 **But** for our use cases events are used to cross the language barrier primarily and we want to have maximum ergonomics in how to write handlers for these using the new Observer API.

@@ -121,6 +121,31 @@ main {
     }
 }
 
+.clients {
+    margin-top: 25px;
+    text-align: center;
+
+    p {
+        // padding-left: 90px;
+        font-size: x-large;
+        margin-top: 40px;
+        margin-bottom: 40px;
+    }
+
+    .row {
+        display: flex;
+        justify-content: center;
+        column-gap: 60px;
+        flex-flow: row wrap;
+        max-width: 898px;
+        margin: auto;
+
+        img {
+            max-width: 200px;
+        }
+    }
+}
+
 footer {
     display: flex;
     margin-top: 6rem;

@@ -32,11 +32,11 @@
     </h1>
     <div class="content">
         <img src="demo.gif" alt="demo" style="width: 50%; max-width: 500px" class="inline-img" />
-<p>In this post we talk about how to integrate web native APIs via WASM with Bevy.</p>
+<p>In this post, we talk about how to integrate web native APIs via WASM with Bevy.</p>
 <p>We utilize the recently released <a href="https://crates.io/crates/bevy_channel_trigger">bevy_channel_trigger</a> crate, <a href="https://github.com/rustwasm/wasm-bindgen">wasm-bindgen</a> and <a href="https://github.com/rustwasm/gloo">gloo</a>.</p>
-<p>If you just want to jump right into the code and tinker with it, find it on <a href="https://github.com/rustunit/bevy_web_drop_image_as_sprite">GitHub</a>.</p>
+<p>If you want to play with the code and tinker with it, you can find it on <a href="https://github.com/rustunit/bevy_web_drop_image_as_sprite">GitHub</a>.</p>
 <h1 id="what-is-the-use-case">What is the use case?</h1>
-<p>In this example we want to allow the user to drop a <em>PNG</em> image into our Bevy app running in the Browser. The app should load the image into the Bevy Asset machinery and display it like any other image file. See the animation to the right visualizing this.</p>
+<p>In this example, we want to allow the user to drop a <em>PNG</em> image into our Bevy app running in the Browser. The app should load the image into the Bevy Asset machinery and display it like any other image file. See the animation to the right visualizing this.</p>
 <p>The steps to making this work are:</p>
 <ol>
 <li>Prepare the DOM to receive drop events</li>
@@ -132,12 +132,12 @@
 <p>Find the full function code up on GitHub <a href="https://github.com/rustunit/bevy_web_drop_image_as_sprite/blob/10eb3fca875eb0edb608cf8903b314fa5cebcac9/src/web/web.rs#L7">here</a>.</p>
 <p>Once again the way we handle the drop and extract the binary content of the file dropped is very similar to how you would do it in vanilla javascript. We are using the <code>FileReader</code> API to read the binary data and some metadata from the file and then forward it to Bevy via <code>send_event</code>.</p>
 <p>We will look into how exactly we bridge the two worlds of DOM-events and Bevy-events in the next section.</p>
-<p>You will notice a lot of un-idiomatic rust here just unwrapping instead of handling the errors. This is because we are in a demo and we want to keep the code as simple as possible. In a real world application you would want to handle the errors properly.</p>
+<p>You will notice a lot of un-idiomatic rust here just unwrapping instead of handling the errors. This is because we are in a demo and we want to keep the code as simple as possible. In a real-world application, you would want to handle the errors properly.</p>
 <blockquote>
-<p>We are using <code>.forget</code> in this demo for simplicities sake which will leak the event listeners. Just like with <code>unwrap</code> it would be different in a real world application - you would want to store the event listeners in a struct and drop them when they are no longer needed.</p>
+<p>We are using <code>.forget</code> in this demo for simplicity's sake which will leak the event listeners. Just like with <code>unwrap</code> it would be different in a real-world application - you would want to store the event listeners in a struct and drop them when they are no longer needed.</p>
 </blockquote>
 <h2 id="3-forward-events-to-bevy">3. Forward events to Bevy</h2>
-<p>In the above event listener we are calling <code>send_event</code> to forward the file data to Bevy. Lets look at how this function works:</p>
+<p>In the above event listener we are calling <code>send_event</code> to forward the file data to Bevy. Let's look at how this function works:</p>
 <pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="font-style:italic;color:#c792ea;">static </span><span>SENDER</span><span style="color:#89ddff;">: </span><span>OnceLock</span><span style="color:#89ddff;">&lt;</span><span style="color:#ffcb6b;">Option</span><span style="color:#89ddff;">&lt;</span><span>ChannelSender</span><span style="color:#89ddff;">&lt;</span><span>WebEvent</span><span style="color:#89ddff;">&gt;&gt;&gt; = </span><span>OnceLock</span><span style="color:#89ddff;">::</span><span>new</span><span style="color:#89ddff;">();
 </span><span>
 </span><span style="color:#c792ea;">pub </span><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">send_event</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">e</span><span style="color:#89ddff;">:</span><span> WebEvent</span><span style="color:#89ddff;">) {
@@ -149,7 +149,7 @@
 </span></code></pre>
 <p><code>ChannelSender</code> is a type from the <code>bevy_channel_trigger</code> that effectively is a multi-producer single-consumer channel (the sending part of it) that we can use to send events from the web side to the Bevy side. Exactly how we are going to receive these events in Bevy is covered in the next section.</p>
 <blockquote>
-<p>Our previous blog post dives into detail how <code>bevy_channel_trigger</code> works and how you can use it in your own projects. You can find it <a href="https://rustunit.com/blog/2024/11-15-bevy-channel-trigger">here</a>.</p>
+<p>Our previous blog post dives into detail about how <code>bevy_channel_trigger</code> works and how you can use it in your projects. You can find it <a href="https://rustunit.com/blog/2024/11-15-bevy-channel-trigger">here</a>.</p>
 </blockquote>
 <h2 id="4-receive-and-load-image-data-in-bevy">4. Receive and load image data in Bevy</h2>
 <p>The final piece of the puzzle is the receiving side in Bevy to process a binary blob we expect to be an image file and load it as an <code>Image</code> Asset. If that succeeds we can start using it for rendering:</p>
@@ -182,14 +182,14 @@
 </span><span>    sprite</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">single_mut</span><span style="color:#89ddff;">().</span><span>image </span><span style="color:#89ddff;">=</span><span> handle</span><span style="color:#89ddff;">;
 </span><span style="color:#89ddff;">}
 </span></code></pre>
-<p>The above function <code>process_web_events</code> is registered as an observer into our <code>App</code> and trigger anytime the <code>send_event</code> function from earlier is called.</p>
-<p>At the core of it we are trying to create an <a href="https://docs.rs/bevy/latest/bevy/image/struct.Image.html#method.from_buffer"><code>Image</code></a> from a buffer, providing the mime-type to help choosing the encoder. If it fails we either have no way to parse the file format as an image or the dropped file was no image in the first place and we return.</p>
+<p>The above function <code>process_web_events</code> is registered as an observer in our <code>App</code> and triggers any time the <code>send_event</code> function from earlier is called.</p>
+<p>At the core of it, we are trying to create an <a href="https://docs.rs/bevy/latest/bevy/image/struct.Image.html#method.from_buffer"><code>Image</code></a> from a buffer, providing the mime-type to help choose the encoder. If it fails we either have no way to parse the file format as an image or the dropped file was no image in the first place and we return.</p>
 <p>If the image loading was successful we keep the image as an asset and use the <code>Handle&lt;Image&gt;</code> to swap out the sprite moving up and down the screen.</p>
 <h1 id="conclusion">Conclusion</h1>
-<p>In the demo we have shown how to integrate web native APIs via WASM with Bevy. In this post we focused on the key aspects of the code base. There is more though, feel free to dig into the project on GitHub, run it and tinker with it.</p>
+<p>In the demo, we have shown how to integrate web native APIs via WASM with Bevy. In this post, we focused on the key aspects of the code base. There is more though, feel free to dig into the project on GitHub, run it, and tinker with it.</p>
 <p>Bevy is a strong tool to bring interactive applications to the web and with the help of WASM and the right crates you can integrate web native APIs with ease.</p>
 <hr />
-<p>You need support building your Bevy or Rust project? Our team of experts can support you! <a href="https://rustunit.com/contact/">Contact us.</a></p>
+<p>Do you need support building your Bevy or Rust project? Our team of experts can support you! <a href="https://rustunit.com/contact/">Contact us.</a></p>
 
     </div>
 </div>

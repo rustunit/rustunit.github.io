@@ -183,7 +183,7 @@
 </span><span style="color:#89ddff;">}
 </span></code></pre>
 <p>The above function <code>process_web_events</code> is registered as an observer into our <code>App</code> and trigger anytime the <code>send_event</code> function from earlier is called.</p>
-<p>At the core of it we are trying to create an <code>Image</code> from a buffer, providing the mime-type to help choosing the encoder. If it fails we either have no way to parse the file format as an image or the dropped file was no image in the first place and we return.</p>
+<p>At the core of it we are trying to create an <a href="https://docs.rs/bevy/latest/bevy/image/struct.Image.html#method.from_buffer"><code>Image</code></a> from a buffer, providing the mime-type to help choosing the encoder. If it fails we either have no way to parse the file format as an image or the dropped file was no image in the first place and we return.</p>
 <p>If the image loading was successful we keep the image as an asset and use the <code>Handle&lt;Image&gt;</code> to swap out the sprite moving up and down the screen.</p>
 <h1 id="conclusion">Conclusion</h1>
 <p>In the demo we have shown how to integrate web native APIs via WASM with Bevy. In this post we focused on the key aspects of the code base. There is more though, feel free to dig into the project on GitHub, run it and tinker with it.</p>

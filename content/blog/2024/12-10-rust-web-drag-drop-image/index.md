@@ -186,7 +186,7 @@ fn process_web_events(
 
 The above function `process_web_events` is registered as an observer into our `App` and trigger anytime the `send_event` function from earlier is called.
 
-At the core of it we are trying to create an `Image` from a buffer, providing the mime-type to help choosing the encoder. If it fails we either have no way to parse the file format as an image or the dropped file was no image in the first place and we return. 
+At the core of it we are trying to create an [`Image`](https://docs.rs/bevy/latest/bevy/image/struct.Image.html#method.from_buffer) from a buffer, providing the mime-type to help choosing the encoder. If it fails we either have no way to parse the file format as an image or the dropped file was no image in the first place and we return. 
 
 If the image loading was successful we keep the image as an asset and use the `Handle<Image>` to swap out the sprite moving up and down the screen.
 

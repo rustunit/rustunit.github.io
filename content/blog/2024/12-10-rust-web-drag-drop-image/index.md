@@ -3,7 +3,7 @@ title = "Drag & Drop Images into Bevy 0.15 on the web"
 date = 2024-12-10
 [extra]
 tags=["rust","bevy","web"] 
-hidden = true
+hidden = false
 custom_summary = "In this post, we talk about how to integrate web native APIs via WASM with Bevy."
 +++
 

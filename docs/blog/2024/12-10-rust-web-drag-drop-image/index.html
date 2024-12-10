@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>rustunit</title>
+    <meta name="description" content="Rustunit offers software development consulting with a focus on rust, game-development and large scale distributed backend services.">
+
+    <link rel="stylesheet" href="https://rustunit.com/fonts.css">
+    <link rel="stylesheet" href="https://rustunit.com/style.css">
+
+    <script src="https://cdn.usefathom.com/script.js" data-site="TSUIPVAW" defer></script>
+</head>
+
+<body>
+    <header>
+        <a href="https://rustunit.com/">HOME</a>
+        <a href="https://rustunit.com/#games">GAMES</a>
+        <a href="https://rustunit.com/blog/">BLOG</a>
+        <a href="https://rustunit.com/contact/">CONTACT</a>
+    </header>
+    
+<div id="blogpage">
+    <div class="date">2024-12-10</div>
+    
+    <div class="hidden">hidden</div>
+    
+    <h1 class="title">
+        Drag &amp; Drop Images into Bevy 0.15 on the web
+    </h1>
+    <div class="content">
+        <img src="demo.gif" alt="demo" style="width: 50%; max-width: 500px" class="inline-img" />
+<p>In this post we talk about how to integrate web native APIs via WASM with Bevy.</p>
+<p>We utilize the recently released <a href="https://crates.io/crates/bevy_channel_trigger">bevy_channel_trigger</a> crate, <a href="https://github.com/rustwasm/wasm-bindgen">wasm-bindgen</a> and <a href="https://github.com/rustwasm/gloo">gloo</a>.</p>
+<p>If you just want to jump right into the code and tinker with it, find it on <a href="https://github.com/rustunit/bevy_web_drop_image_as_sprite">GitHub</a>.</p>
+<h1 id="what-is-the-use-case">What is the use case?</h1>
+<p>In this example we want to allow the user to drop a <em>PNG</em> image into our Bevy app running in the Browser. The app should load the image into the Bevy Asset machinery and display it like any other image file. See the animation to the right visualizing this.</p>
+<p>The steps to making this work are:</p>
+<ol>
+<li>Prepare the DOM to receive drop events</li>
+<li>Handle Drop-Events (containing file data)</li>
+<li>Forward events to Bevy</li>
+<li>Receive and load image data in Bevy</li>
+</ol>
+<p>Let's dive into the details of each of these steps.</p>
+<h2 id="1-prepare-the-dom-to-receive-drop-events">1. Prepare the DOM to receive drop events</h2>
+<p>The first thing we need to do is to register the event listeners for <code>dragover</code> and <code>drop</code> on the DOM element we want to receive the drop events. We will be using wasm-bindgen and gloo to be able to do this right from our rust code:</p>
+<pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#c792ea;">pub </span><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">register_drop</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">id</span><span style="color:#89ddff;">: &amp;</span><span style="font-style:italic;color:#c792ea;">str</span><span style="color:#89ddff;">) -&gt; </span><span style="color:#ffcb6b;">Option</span><span style="color:#89ddff;">&lt;()&gt; {
+</span><span>    </span><span style="font-style:italic;color:#c792ea;">let</span><span> doc </span><span style="color:#89ddff;">= </span><span>gloo</span><span style="color:#89ddff;">::</span><span>utils</span><span style="color:#89ddff;">::</span><span>document</span><span style="color:#89ddff;">();
+</span><span>    </span><span style="font-style:italic;color:#c792ea;">let</span><span> element </span><span style="color:#89ddff;">=</span><span> doc</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">get_element_by_id</span><span style="color:#89ddff;">(</span><span>id</span><span style="color:#89ddff;">)?;
+</span><span>
+</span><span>    EventListener</span><span style="color:#89ddff;">::</span><span>new_with_options</span><span style="color:#89ddff;">(
+</span><span>        </span><span style="color:#89ddff;">&amp;</span><span>element</span><span style="color:#89ddff;">,
+</span><span>        </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">dragover</span><span style="color:#89ddff;">&quot;,
+</span><span>        EventListenerOptions</span><span style="color:#89ddff;">::</span><span>enable_prevent_default</span><span style="color:#89ddff;">(),
+</span><span>        </span><span style="color:#c792ea;">move </span><span style="color:#89ddff;">|</span><span>event</span><span style="color:#89ddff;">| {
+</span><span>            </span><span style="font-style:italic;color:#c792ea;">let</span><span> event</span><span style="color:#89ddff;">:</span><span> DragEvent </span><span style="color:#89ddff;">=</span><span> event</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">clone</span><span style="color:#89ddff;">().</span><span style="color:#82aaff;">dyn_into</span><span style="color:#89ddff;">().</span><span style="color:#82aaff;">unwrap</span><span style="color:#89ddff;">();
+</span><span>            event</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">stop_propagation</span><span style="color:#89ddff;">();
+</span><span>            event</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">prevent_default</span><span style="color:#89ddff;">();
+</span><span>
+</span><span>            event
+</span><span>                </span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">data_transfer</span><span style="color:#89ddff;">()
+</span><span>                </span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">unwrap</span><span style="color:#89ddff;">()
+</span><span>                </span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">set_drop_effect</span><span style="color:#89ddff;">(&quot;</span><span style="color:#c3e88d;">copy</span><span style="color:#89ddff;">&quot;);
+</span><span>            event
+</span><span>                </span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">data_transfer</span><span style="color:#89ddff;">()
+</span><span>                </span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">unwrap</span><span style="color:#89ddff;">()
+</span><span>                </span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">set_effect_allowed</span><span style="color:#89ddff;">(&quot;</span><span style="color:#c3e88d;">all</span><span style="color:#89ddff;">&quot;);
+</span><span>        </span><span style="color:#89ddff;">},
+</span><span>    </span><span style="color:#89ddff;">)
+</span><span>    </span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">forget</span><span style="color:#89ddff;">();
+</span><span>
+</span><span>    </span><span style="font-style:italic;color:#4a4a4a;">//...
+</span><span style="color:#89ddff;">}
+</span></code></pre>
+<p>You can find the full function <a href="https://github.com/rustunit/bevy_web_drop_image_as_sprite/blob/10eb3fca875eb0edb608cf8903b314fa5cebcac9/src/web/web.rs#L7">here</a> but the important part is that the code is essentially 1:1 from how you would solve this in vanilla javascript translated to rust while looking at the <a href="https://docs.rs/web-sys/latest/web_sys/">web_sys docs</a> for reference.</p>
+<blockquote>
+<p>Note that we are setting the <code>drop_effect</code> and <code>effect_allowed</code> here to make sure the browser will allow us to receive the drop and to show this on the mouse cursor to the user as well.</p>
+</blockquote>
+<p>The handling of the <code>drop</code> event is a bit more involved as we need to extract the file data from the event and forward it to Bevy. We will cover this in the next section.</p>
+<h2 id="2-handle-drop-events">2. Handle Drop-Events</h2>
+<p>The following code is the second half of the <code>register_drop</code> function we started in the previous section. It handles the <code>drop</code> event and forwards the file data to Bevy:</p>
+<pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span>EventListener</span><span style="color:#89ddff;">::</span><span>new_with_options</span><span style="color:#89ddff;">(
+</span><span>    </span><span style="color:#89ddff;">&amp;</span><span>element</span><span style="color:#89ddff;">,
+</span><span>    </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">drop</span><span style="color:#89ddff;">&quot;,
+</span><span>    EventListenerOptions</span><span style="color:#89ddff;">::</span><span>enable_prevent_default</span><span style="color:#89ddff;">(),
+</span><span>    </span><span style="color:#c792ea;">move </span><span style="color:#89ddff;">|</span><span>event</span><span style="color:#89ddff;">| {
+</span><span>        </span><span style="font-style:italic;color:#c792ea;">let</span><span> event</span><span style="color:#89ddff;">:</span><span> DragEvent </span><span style="color:#89ddff;">=</span><span> event</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">clone</span><span style="color:#89ddff;">().</span><span style="color:#82aaff;">dyn_into</span><span style="color:#89ddff;">().</span><span style="color:#82aaff;">unwrap</span><span style="color:#89ddff;">();
+</span><span>        event</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">stop_propagation</span><span style="color:#89ddff;">();
+</span><span>        event</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">prevent_default</span><span style="color:#89ddff;">();
+</span><span>
+</span><span>        </span><span style="font-style:italic;color:#c792ea;">let</span><span> transfer </span><span style="color:#89ddff;">=</span><span> event</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">data_transfer</span><span style="color:#89ddff;">().</span><span style="color:#82aaff;">unwrap</span><span style="color:#89ddff;">();
+</span><span>        </span><span style="font-style:italic;color:#c792ea;">let</span><span> files </span><span style="color:#89ddff;">=</span><span> transfer</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">items</span><span style="color:#89ddff;">();
+</span><span>
+</span><span>        </span><span style="font-style:italic;color:#c792ea;">for</span><span> idx </span><span style="color:#89ddff;">in </span><span style="color:#f78c6c;">0</span><span style="color:#89ddff;">..</span><span>files</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">length</span><span style="color:#89ddff;">() {
+</span><span>            </span><span style="font-style:italic;color:#c792ea;">let</span><span> file </span><span style="color:#89ddff;">=</span><span> files</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">get</span><span style="color:#89ddff;">(</span><span>idx</span><span style="color:#89ddff;">).</span><span style="color:#82aaff;">unwrap</span><span style="color:#89ddff;">();
+</span><span>            </span><span style="font-style:italic;color:#c792ea;">let</span><span> file_info </span><span style="color:#89ddff;">=</span><span> file</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">get_as_file</span><span style="color:#89ddff;">().</span><span style="color:#82aaff;">ok</span><span style="color:#89ddff;">().</span><span style="color:#82aaff;">flatten</span><span style="color:#89ddff;">().</span><span style="color:#82aaff;">unwrap</span><span style="color:#89ddff;">();
+</span><span>
+</span><span>            </span><span style="font-style:italic;color:#c792ea;">let</span><span> file_reader </span><span style="color:#89ddff;">= </span><span>FileReader</span><span style="color:#89ddff;">::</span><span>new</span><span style="color:#89ddff;">().</span><span style="color:#82aaff;">unwrap</span><span style="color:#89ddff;">();
+</span><span>
+</span><span>            </span><span style="color:#89ddff;">{
+</span><span>                </span><span style="font-style:italic;color:#c792ea;">let</span><span> file_reader </span><span style="color:#89ddff;">=</span><span> file_reader</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">clone</span><span style="color:#89ddff;">();
+</span><span>                </span><span style="font-style:italic;color:#c792ea;">let</span><span> file_info </span><span style="color:#89ddff;">=</span><span> file_info</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">clone</span><span style="color:#89ddff;">();
+</span><span>
+</span><span>                </span><span style="font-style:italic;color:#4a4a4a;">// register the listener for when the file is loaded
+</span><span>                EventListener</span><span style="color:#89ddff;">::</span><span>new</span><span style="color:#89ddff;">(&amp;</span><span>file_reader</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">clone</span><span style="color:#89ddff;">(), &quot;</span><span style="color:#c3e88d;">load</span><span style="color:#89ddff;">&quot;, </span><span style="color:#c792ea;">move </span><span style="color:#89ddff;">|</span><span>_event</span><span style="color:#89ddff;">| {
+</span><span>                    </span><span style="font-style:italic;color:#4a4a4a;">// read the binary data from the file
+</span><span>                    </span><span style="font-style:italic;color:#c792ea;">let</span><span> result </span><span style="color:#89ddff;">=</span><span> file_reader</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">result</span><span style="color:#89ddff;">().</span><span style="color:#82aaff;">unwrap</span><span style="color:#89ddff;">();
+</span><span>                    </span><span style="font-style:italic;color:#c792ea;">let</span><span> result </span><span style="color:#89ddff;">= </span><span>web_sys</span><span style="color:#89ddff;">::</span><span>js_sys</span><span style="color:#89ddff;">::</span><span>Uint8Array</span><span style="color:#89ddff;">::</span><span>new</span><span style="color:#89ddff;">(&amp;</span><span>result</span><span style="color:#89ddff;">);
+</span><span>                    </span><span style="font-style:italic;color:#c792ea;">let </span><span style="color:#c792ea;">mut</span><span> data</span><span style="color:#89ddff;">: </span><span style="color:#ffcb6b;">Vec</span><span style="color:#89ddff;">&lt;</span><span style="font-style:italic;color:#c792ea;">u8</span><span style="color:#89ddff;">&gt; = </span><span>vec!</span><span style="color:#89ddff;">[</span><span style="color:#f78c6c;">0</span><span style="color:#89ddff;">;</span><span> result</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">length</span><span style="color:#89ddff;">() as </span><span style="font-style:italic;color:#c792ea;">usize</span><span style="color:#89ddff;">];
+</span><span>                    result</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">copy_to</span><span style="color:#89ddff;">(&amp;</span><span style="color:#c792ea;">mut</span><span> data</span><span style="color:#89ddff;">);
+</span><span>
+</span><span>                    </span><span style="font-style:italic;color:#4a4a4a;">// send the binary data to our bevy app logic
+</span><span>                    </span><span style="color:#82aaff;">send_event</span><span style="color:#89ddff;">(</span><span style="color:#c792ea;">crate</span><span style="color:#89ddff;">::</span><span>web</span><span style="color:#89ddff;">::</span><span>WebEvent</span><span style="color:#89ddff;">::</span><span>Drop </span><span style="color:#89ddff;">{
+</span><span>                        name</span><span style="color:#89ddff;">:</span><span> file_info</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">name</span><span style="color:#89ddff;">(),
+</span><span>                        data</span><span style="color:#89ddff;">,
+</span><span>                        mime_type</span><span style="color:#89ddff;">:</span><span> file_info</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">type_</span><span style="color:#89ddff;">(),
+</span><span>                    </span><span style="color:#89ddff;">});
+</span><span>                </span><span style="color:#89ddff;">})
+</span><span>                </span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">forget</span><span style="color:#89ddff;">();
+</span><span>            </span><span style="color:#89ddff;">}
+</span><span>
+</span><span>            </span><span style="font-style:italic;color:#4a4a4a;">// this will start the reading and trigger the above event listener eventually
+</span><span>            file_reader</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">read_as_array_buffer</span><span style="color:#89ddff;">(&amp;</span><span>file_info</span><span style="color:#89ddff;">).</span><span style="color:#82aaff;">unwrap</span><span style="color:#89ddff;">();
+</span><span>        </span><span style="color:#89ddff;">}
+</span><span>    </span><span style="color:#89ddff;">},
+</span><span style="color:#89ddff;">)
+</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">forget</span><span style="color:#89ddff;">();
+</span></code></pre>
+<p>Find the full function code up on GitHub <a href="https://github.com/rustunit/bevy_web_drop_image_as_sprite/blob/10eb3fca875eb0edb608cf8903b314fa5cebcac9/src/web/web.rs#L7">here</a>.</p>
+<p>Once again the way we handle the drop and extract the binary content of the file dropped is very similar to how you would do it in vanilla javascript. We are using the <code>FileReader</code> API to read the binary data and some metadata from the file and then forward it to Bevy via <code>send_event</code>.</p>
+<p>We will look into how exactly we bridge the two worlds of DOM-events and Bevy-events in the next section.</p>
+<p>You will notice a lot of un-idiomatic rust here just unwrapping instead of handling the errors. This is because we are in a demo and we want to keep the code as simple as possible. In a real world application you would want to handle the errors properly.</p>
+<blockquote>
+<p>We are using <code>.forget</code> in this demo for simplicities sake which will leak the event listeners. Just like with <code>unwrap</code> it would be different in a real world application - you would want to store the event listeners in a struct and drop them when they are no longer needed.</p>
+</blockquote>
+<h2 id="3-forward-events-to-bevy">3. Forward events to Bevy</h2>
+<p>In the above event listener we are calling <code>send_event</code> to forward the file data to Bevy. Lets look at how this function works:</p>
+<pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="font-style:italic;color:#c792ea;">static </span><span>SENDER</span><span style="color:#89ddff;">: </span><span>OnceLock</span><span style="color:#89ddff;">&lt;</span><span style="color:#ffcb6b;">Option</span><span style="color:#89ddff;">&lt;</span><span>ChannelSender</span><span style="color:#89ddff;">&lt;</span><span>WebEvent</span><span style="color:#89ddff;">&gt;&gt;&gt; = </span><span>OnceLock</span><span style="color:#89ddff;">::</span><span>new</span><span style="color:#89ddff;">();
+</span><span>
+</span><span style="color:#c792ea;">pub </span><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">send_event</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">e</span><span style="color:#89ddff;">:</span><span> WebEvent</span><span style="color:#89ddff;">) {
+</span><span>    </span><span style="font-style:italic;color:#c792ea;">let </span><span style="color:#ffcb6b;">Some</span><span style="color:#89ddff;">(</span><span>sender</span><span style="color:#89ddff;">) = </span><span>SENDER</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">get</span><span style="color:#89ddff;">().</span><span style="color:#82aaff;">map</span><span style="color:#89ddff;">(</span><span style="color:#ffcb6b;">Option</span><span style="color:#89ddff;">::</span><span>as_ref</span><span style="color:#89ddff;">).</span><span style="color:#82aaff;">flatten</span><span style="color:#89ddff;">() </span><span style="font-style:italic;color:#c792ea;">else </span><span style="color:#89ddff;">{
+</span><span>        </span><span style="font-style:italic;color:#c792ea;">return </span><span>bevy</span><span style="color:#89ddff;">::</span><span>log</span><span style="color:#89ddff;">::</span><span>error</span><span style="color:#89ddff;">!(&quot;</span><span style="color:#c3e88d;">`WebPlugin` not installed correctly (no sender found)</span><span style="color:#89ddff;">&quot;);
+</span><span>    </span><span style="color:#89ddff;">};
+</span><span>    sender</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">send</span><span style="color:#89ddff;">(</span><span>e</span><span style="color:#89ddff;">);
+</span><span style="color:#89ddff;">}
+</span></code></pre>
+<p><code>ChannelSender</code> is a type from the <code>bevy_channel_trigger</code> that effectively is a multi-producer single-consumer channel (the sending part of it) that we can use to send events from the web side to the Bevy side. Exactly how we are going to receive these events in Bevy is covered in the next section.</p>
+<blockquote>
+<p>Our previous blog post dives into detail how <code>bevy_channel_trigger</code> works and how you can use it in your own projects. You can find it <a href="https://rustunit.com/blog/2024/11-15-bevy-channel-trigger">here</a>.</p>
+</blockquote>
+<h2 id="4-receive-and-load-image-data-in-bevy">4. Receive and load image data in Bevy</h2>
+<p>The final piece of the puzzle is the receiving side in Bevy to process a binary blob we expect to be an image file and load it as an <code>Image</code> Asset. If that succeeds we can start using it for rendering:</p>
+<pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">process_web_events</span><span style="color:#89ddff;">(
+</span><span>    </span><span style="color:#f78c6c;">trigger</span><span style="color:#89ddff;">: </span><span>Trigger</span><span style="color:#89ddff;">&lt;</span><span>WebEvent</span><span style="color:#89ddff;">&gt;</span><span>,
+</span><span>    </span><span style="color:#f78c6c;">assets</span><span style="color:#89ddff;">: </span><span>Res</span><span style="color:#89ddff;">&lt;</span><span>AssetServer</span><span style="color:#89ddff;">&gt;</span><span>,
+</span><span>    </span><span style="color:#c792ea;">mut </span><span style="color:#f78c6c;">sprite</span><span style="color:#89ddff;">: </span><span>Query</span><span style="color:#89ddff;">&lt;&amp;</span><span style="color:#c792ea;">mut</span><span> Sprite</span><span style="color:#89ddff;">&gt;</span><span>,
+</span><span style="color:#89ddff;">) {
+</span><span>    </span><span style="font-style:italic;color:#c792ea;">let</span><span> e </span><span style="color:#89ddff;">=</span><span> trigger</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">event</span><span style="color:#89ddff;">();
+</span><span>    </span><span style="font-style:italic;color:#c792ea;">let </span><span>WebEvent</span><span style="color:#89ddff;">::</span><span>Drop </span><span style="color:#89ddff;">{
+</span><span>        data</span><span style="color:#89ddff;">,
+</span><span>        mime_type</span><span style="color:#89ddff;">,
+</span><span>        name</span><span style="color:#89ddff;">,
+</span><span>    </span><span style="color:#89ddff;">} =</span><span> e</span><span style="color:#89ddff;">;
+</span><span>
+</span><span>    </span><span style="font-style:italic;color:#c792ea;">let </span><span style="color:#ffcb6b;">Ok</span><span style="color:#89ddff;">(</span><span>image</span><span style="color:#89ddff;">) = </span><span>Image</span><span style="color:#89ddff;">::</span><span>from_buffer</span><span style="color:#89ddff;">(
+</span><span>        data</span><span style="color:#89ddff;">,
+</span><span>        ImageType</span><span style="color:#89ddff;">::</span><span>MimeType</span><span style="color:#89ddff;">(</span><span>mime_type</span><span style="color:#89ddff;">),
+</span><span>        CompressedImageFormats</span><span style="color:#89ddff;">::</span><span>default</span><span style="color:#89ddff;">(),
+</span><span>        </span><span style="color:#f78c6c;">true</span><span style="color:#89ddff;">,
+</span><span>        ImageSampler</span><span style="color:#89ddff;">::</span><span>Default</span><span style="color:#89ddff;">,
+</span><span>        RenderAssetUsages</span><span style="color:#89ddff;">::</span><span>RENDER_WORLD</span><span style="color:#89ddff;">,
+</span><span>    </span><span style="color:#89ddff;">) </span><span style="font-style:italic;color:#c792ea;">else </span><span style="color:#89ddff;">{
+</span><span>        warn!</span><span style="color:#89ddff;">(&quot;</span><span style="color:#c3e88d;">could not load image: &#39;{name}&#39; of type {mime_type}</span><span style="color:#89ddff;">&quot;);
+</span><span>        </span><span style="font-style:italic;color:#c792ea;">return</span><span style="color:#89ddff;">;
+</span><span>    </span><span style="color:#89ddff;">};
+</span><span>
+</span><span>    </span><span style="font-style:italic;color:#c792ea;">let</span><span> handle </span><span style="color:#89ddff;">=</span><span> assets</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">add</span><span style="color:#89ddff;">(</span><span>image</span><span style="color:#89ddff;">);
+</span><span>
+</span><span>    sprite</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">single_mut</span><span style="color:#89ddff;">().</span><span>image </span><span style="color:#89ddff;">=</span><span> handle</span><span style="color:#89ddff;">;
+</span><span style="color:#89ddff;">}
+</span></code></pre>
+<p>The above function <code>process_web_events</code> is registered as an observer into our <code>App</code> and trigger anytime the <code>send_event</code> function from earlier is called.</p>
+<p>At the core of it we are trying to create an <code>Image</code> from a buffer, providing the mime-type to help choosing the encoder. If it fails we either have no way to parse the file format as an image or the dropped file was no image in the first place and we return.</p>
+<p>If the image loading was successful we keep the image as an asset and use the <code>Handle&lt;Image&gt;</code> to swap out the sprite moving up and down the screen.</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>In the demo we have shown how to integrate web native APIs via WASM with Bevy. In this post we focused on the key aspects of the code base. There is more though, feel free to dig into the project on GitHub, run it and tinker with it.</p>
+<p>Bevy is a strong tool to bring interactive applications to the web and with the help of WASM and the right crates you can integrate web native APIs with ease.</p>
+<hr />
+<p>You need support building your Bevy or Rust project? Our team of experts can support you! <a href="https://rustunit.com/contact/">Contact us.</a></p>
+
+    </div>
+</div>
+
+    <footer>
+        
+        <div class="links">
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.linkedin.com&#x2F;company&#x2F;rustunit&#x2F;" title="LinkedIn">
+                <img alt="LinkedIn" class="icon" src="https://rustunit.com/icons/linkedin.svg" />
+            </a>
+            
+            <a rel="me" href="&#x2F;contact" title="Contact">
+                <img alt="Contact" class="icon" src="https://rustunit.com/icons/mail.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;github.com&#x2F;rustunit" title="GitHub">
+                <img alt="GitHub" class="icon" src="https://rustunit.com/icons/github.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.youtube.com&#x2F;@rustunit_com" title="YouTube">
+                <img alt="YouTube" class="icon" src="https://rustunit.com/icons/youtube.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;mastodon.social&#x2F;@rustunit" title="Mastodon">
+                <img alt="Mastodon" class="icon" src="https://rustunit.com/icons/mastodon.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;discord.gg&#x2F;rZv4uxSQx3" title="Discord">
+                <img alt="Discord" class="icon" src="https://rustunit.com/icons/discord.svg" />
+            </a>
+            
+        </div>
+        
+
+        <div>Copyright © 2024 Rustunit B.V.</div>
+    </footer>
+</body>
+
+</html>

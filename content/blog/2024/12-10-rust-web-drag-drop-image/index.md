@@ -1,9 +1,9 @@
 +++
-title = "Drag & Drop Images into Bevy on the web"
+title = "Drag & Drop Images into Bevy 0.15 on the web"
 date = 2024-12-10
 [extra]
 tags=["rust","bevy","web"] 
-hidden = false
+hidden = true
 custom_summary = "In this post we talk about how to integrate web native APIs via WASM with Bevy."
 +++
 
@@ -147,15 +147,54 @@ pub fn send_event(e: WebEvent) {
 
 `ChannelSender` is a type from the `bevy_channel_trigger` that effectively is a multi-producer single-consumer channel (the sending part of it) that we can use to send events from the web side to the Bevy side. Exactly how we are going to receive these events in Bevy is covered in the next section.
 
-> Our previous blog post dives into detail how this works and how you can use it in your own projects. You can find it [here](https://rustunit.com/blog/2024/11-15-bevy-channel-trigger).
+> Our previous blog post dives into detail how `bevy_channel_trigger` works and how you can use it in your own projects. You can find it [here](https://rustunit.com/blog/2024/11-15-bevy-channel-trigger).
 
 ## 4. Receive and load image data in Bevy
 
-Lorem Ipsum Dolores Lorem Ipsum Dolores Lorem Ipsum Dolores Lorem Ipsum Dolores Lorem Ipsum Dolores Lorem Ipsum Dolores Lorem Ipsum Dolores Lorem Ipsum Dolores Lorem Ipsum Dolores 
+The final piece of the puzzle is the receiving side in Bevy to process a binary blob we expect to be an image file and load it as an `Image` Asset. If that succeeds we can start using it for rendering:
+
+```rust
+fn process_web_events(
+    trigger: Trigger<WebEvent>,
+    assets: Res<AssetServer>,
+    mut sprite: Query<&mut Sprite>,
+) {
+    let e = trigger.event();
+    let WebEvent::Drop {
+        data,
+        mime_type,
+        name,
+    } = e;
+
+    let Ok(image) = Image::from_buffer(
+        data,
+        ImageType::MimeType(mime_type),
+        CompressedImageFormats::default(),
+        true,
+        ImageSampler::Default,
+        RenderAssetUsages::RENDER_WORLD,
+    ) else {
+        warn!("could not load image: '{name}' of type {mime_type}");
+        return;
+    };
+
+    let handle = assets.add(image);
+
+    sprite.single_mut().image = handle;
+}
+```
+
+The above function `process_web_events` is registered as an observer into our `App` and trigger anytime the `send_event` function from earlier is called.
+
+At the core of it we are trying to create an `Image` from a buffer, providing the mime-type to help choosing the encoder. If it fails we either have no way to parse the file format as an image or the dropped file was no image in the first place and we return. 
+
+If the image loading was successful we keep the image as an asset and use the `Handle<Image>` to swap out the sprite moving up and down the screen.
 
 # Conclusion
 
-Lorem Ipsum Dolores Lorem Ipsum Dolores 
+In the demo we have shown how to integrate web native APIs via WASM with Bevy. In this post we focused on the key aspects of the code base. There is more though, feel free to dig into the project on GitHub, run it and tinker with it.
+
+Bevy is a strong tool to bring interactive applications to the web and with the help of WASM and the right crates you can integrate web native APIs with ease.
 
 ---
 

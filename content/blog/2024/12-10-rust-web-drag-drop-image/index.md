@@ -128,7 +128,7 @@ We will look into how exactly we bridge the two worlds of DOM-events and Bevy-ev
 
 You will notice a lot of un-idiomatic rust here just unwrapping instead of handling the errors. This is because we are in a demo and we want to keep the code as simple as possible. In a real-world application, you would want to handle the errors properly.
 
-> We are using `.forget` in this demo for simplicity's sake which will leak the event listeners. Just like with `unwrap` it would be different in a real-world application - you would want to store the event listeners in a struct and drop them when they are no longer needed.
+> We are using `.forget()` in this demo for simplicity's sake which will leak the event listeners. Just like with `.unwrap()` it would be different in a real-world application - you would want to store the event listeners in a struct and drop them when they are no longer needed.
 
 ## 3. Forward events to Bevy
 

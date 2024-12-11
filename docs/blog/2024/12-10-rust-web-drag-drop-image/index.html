@@ -132,7 +132,7 @@
 <p>We will look into how exactly we bridge the two worlds of DOM-events and Bevy-events in the next section.</p>
 <p>You will notice a lot of un-idiomatic rust here just unwrapping instead of handling the errors. This is because we are in a demo and we want to keep the code as simple as possible. In a real-world application, you would want to handle the errors properly.</p>
 <blockquote>
-<p>We are using <code>.forget</code> in this demo for simplicity's sake which will leak the event listeners. Just like with <code>unwrap</code> it would be different in a real-world application - you would want to store the event listeners in a struct and drop them when they are no longer needed.</p>
+<p>We are using <code>.forget()</code> in this demo for simplicity's sake which will leak the event listeners. Just like with <code>.unwrap()</code> it would be different in a real-world application - you would want to store the event listeners in a struct and drop them when they are no longer needed.</p>
 </blockquote>
 <h2 id="3-forward-events-to-bevy">3. Forward events to Bevy</h2>
 <p>In the above event listener we are calling <code>send_event</code> to forward the file data to Bevy. Let's look at how this function works:</p>

@@ -1,6 +1,15 @@
 #blogpage {
     margin-top: 20px;
 
+    code {
+        color: #c4c4c4;
+        font-weight: bold;
+
+        span {
+            font-weight: normal;
+        }
+    }
+
     hr {
         margin-top: 2em;
         margin-bottom: 2em;

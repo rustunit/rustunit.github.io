@@ -37,6 +37,26 @@ Let's find the cause for this.
 
 # How to find the cause
 
+We first want to find out where in our tree of dependencies this one is used. `cargo tree` is the tool to help you analyze your dependencies as the graph structure they make up. 
+
+When running `cargo tree` we get get over 1.000 lines of output where we can search for `basis-universal`:
+
+```sh
+│       │   ├── bevy_image v0.15.0
+│       │   │   ├── basis-universal v0.3.1
+│       │   │   │   ├── basis-universal-sys v0.3.1
+│       │   │   │   │   [build-dependencies]
+│       │   │   │   │   └── cc v1.2.3 (*)
+```
+
+We got a winner. It is used by `bevy_image`. The problem is that we do not know why. Based on the changelog linked above we know it is supposed to be behind a `feature` flag called `basis_universal`, looking at our `Cargo.toml` we do not enable it though.
+
+> Cargo will enable the minimum subset of `features` needed so that every dependency using `bevy` get the features they ask for.
+
+The question therefore is: Which crate asks for this feature?
+
+# Playing Cargo Feature Detective
+
 There is a little known feature in `cargo tree` that allows us to not only see our dependency tree but also the features that are enabled in each crate. 
 
 Running `cargo tree -e features` in our repository root we get over 3.000 lines of this:

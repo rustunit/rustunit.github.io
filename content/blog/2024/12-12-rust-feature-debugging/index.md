@@ -88,7 +88,7 @@ Luckily we now know already what feature we are looking for: `basis-universal`, 
 │       │   ├── bevy v0.15.0 (*)
 ```
 
-Here we go. Our own crate `bevy_libgdx_atlas` enables the feature `basis-universal` which in turn enables the dependency `basis-universal` which breaks our build on **wasm**. That makes it easier to fix. Funny enough it was used to enable `bevy_image` while trying to depend on the smallest subset of features of `bevy`. This is a known issue in Bevy 0.15, see [#16563](https://github.com/bevyengine/bevy/issues/16563). But there is a cleaner workaround by just enabling the `bevy_image` feature.
+Here we go. Our own crate `bevy_libgdx_atlas` enables the feature `basis-universal` which in turn enables the dependency `basis-universal` which breaks our build on **wasm**. That makes it easier to fix. Funny enough it was used to enable `bevy_image` while trying to depend on the smallest subset of features of `bevy`. This is a known issue in Bevy 0.15, see [#16563](https://github.com/bevyengine/bevy/issues/16563). But there is a cleaner workaround by just enabling the `bevy_image` feature in `bevy_internal` see [here](https://github.com/rustunit/bevy_libgdx_atlas/commit/20cb2e99ef8dd696dfbbff3ef120591cae82703b).
 
 ## Improving ergonomics
 

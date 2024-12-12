@@ -40,7 +40,7 @@
 </span><span>cargo:warning</span><span style="color:#89ddff;">=      |          </span><span style="color:#82aaff;">^</span><span style="font-style:italic;color:#ff5370;">~~~~~~~~~
 </span><span>cargo:warning</span><span style="color:#89ddff;">=</span><span style="color:#c3e88d;">1 </span><span style="color:#82aaff;">error generated.
 </span></code></pre>
-<p>So that looks like some crate tries to build some c code under the hood. That is not a problem on native build targets but wont fly on <strong>wasm</strong>.</p>
+<p>So it looks like some crate is trying to build c code under the hood. That is not a problem on native build targets but it won't fly on <strong>wasm</strong>.</p>
 <p>This happens in the <code>basis-universal</code> crate, what could that be good for? Reading up on it's <a href="https://crates.io/crates/basis-universal">crates.io page</a> we find out that it is:</p>
 <blockquote>
 <p>Bindings for Binomial LLC's basis-universal Supercompressed GPU Texture Codec</p>
@@ -51,7 +51,7 @@
 <p>Let's find the cause for this.</p>
 <h1 id="how-to-find-the-cause">How to find the cause</h1>
 <p>We first want to find out where in our tree of dependencies this one is used. <code>cargo tree</code> is the tool to help you analyze your dependencies as the graph structure they make up.</p>
-<p>When running <code>cargo tree</code> we get get over 1.000 lines of output where we can search for <code>basis-universal</code>:</p>
+<p>When running <code>cargo tree</code> we get over 1.000 lines of output where we can search for <code>basis-universal</code>:</p>
 <pre data-lang="sh" style="background-color:#212121;color:#eeffff;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#82aaff;">│       │   ├── bevy_image v0.15.0
 </span><span style="color:#82aaff;">│       │   │   ├── basis-universal v0.3.1
 </span><span style="color:#82aaff;">│       │   │   │   ├── basis-universal-sys v0.3.1
@@ -60,11 +60,11 @@
 </span></code></pre>
 <p>We got a winner. It is used by <code>bevy_image</code>. The problem is that we do not know why. Based on the changelog linked above we know it is supposed to be behind a <code>feature</code> flag called <code>basis_universal</code>, looking at our <code>Cargo.toml</code> we do not enable it though.</p>
 <blockquote>
-<p>Cargo will enable the minimum subset of <code>features</code> needed so that every dependency using <code>bevy</code> get the features they ask for.</p>
+<p>Cargo will enable the minimum subset of <code>features</code> needed so that every dependency using <code>bevy</code> gets the features they ask for.</p>
 </blockquote>
 <p>The question therefore is: Which crate asks for this feature?</p>
 <h1 id="playing-cargo-feature-detective">Playing Cargo Feature Detective</h1>
-<p>There is a little known feature in <code>cargo tree</code> that allows us to not only see our dependency tree but also the features that are enabled in each crate.</p>
+<p>There is a little-known feature in <code>cargo tree</code> that allows us to not only see our dependency tree but also the features that are enabled in each crate.</p>
 <p>Running <code>cargo tree -e features</code> in our repository root we get over 3.000 lines of this:</p>
 <pre data-lang="sh" style="background-color:#212121;color:#eeffff;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#82aaff;">├── winit v0.30.5
 </span><span style="color:#82aaff;">│   ├── tracing v0.1.41
@@ -82,13 +82,13 @@
 </span><span style="color:#82aaff;">│   │   └── tracing-attributes feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">default</span><span style="color:#89ddff;">&quot;
 </span><span style="color:#82aaff;">│   │       └── tracing-attributes v0.1.28 (proc-macro</span><span>)
 </span></code></pre>
-<p>Luckily we know know already what feature we are looking for: <code>basis-universal</code>, so lets search for <code>bevy feature "basis-universal"</code>:</p>
+<p>Luckily we now know already what feature we are looking for: <code>basis-universal</code>, so let's search for <code>bevy feature "basis-universal"</code>:</p>
 <pre data-lang="sh" style="background-color:#212121;color:#eeffff;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#82aaff;">├── bevy_libgdx_atlas feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">default</span><span style="color:#89ddff;">&quot;
 </span><span style="color:#82aaff;">│   └── bevy_libgdx_atlas v0.3.0
 </span><span style="color:#82aaff;">│       ├── bevy feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">basis-universal</span><span style="color:#89ddff;">&quot;
 </span><span style="color:#82aaff;">│       │   ├── bevy v0.15.0 (</span><span style="color:#89ddff;">*</span><span>)
 </span></code></pre>
-<p>Here we go. Our own crate <code>bevy_libgdx_atlas</code> enables the feature <code>basis-universal</code> which in turn enables the dependency <code>basis-universal</code> which breaks our build on <strong>wasm</strong>. That makes it easier to fix. Funny enough it was used to enable <code>bevy_image</code> while trying to depend on the smallest subset of features of <code>bevy</code>. This is a known in Bevy 0.15, see <a href="https://github.com/bevyengine/bevy/issues/16563">issue #16563</a>. But there is a cleaner workaround by just enabling the <code>bevy_image</code> feature.</p>
+<p>Here we go. Our own crate <code>bevy_libgdx_atlas</code> enables the feature <code>basis-universal</code> which in turn enables the dependency <code>basis-universal</code> which breaks our build on <strong>wasm</strong>. That makes it easier to fix. Funny enough it was used to enable <code>bevy_image</code> while trying to depend on the smallest subset of features of <code>bevy</code>. This is a known issue in Bevy 0.15, see <a href="https://github.com/bevyengine/bevy/issues/16563">#16563</a>. But there is a cleaner workaround by just enabling the <code>bevy_image</code> feature in <code>bevy_internal</code> see <a href="https://github.com/rustunit/bevy_libgdx_atlas/commit/20cb2e99ef8dd696dfbbff3ef120591cae82703b">here</a>.</p>
 <h2 id="improving-ergonomics">Improving ergonomics</h2>
 <p>In case you run into multiple crates doing this and depending on said feature it is more ergonomic to invert the tree using: <code>cargo tree -e features -p bevy --invert</code>.
 With this we limit our root to <code>bevy</code> and we will find <em>one</em> entry for the feature and a subtree of dependencies using it:</p>
@@ -99,13 +99,13 @@ With this we limit our root to <code>bevy</code> and we will find <em>one</em> e
 </span></code></pre>
 <h1 id="conclusion">Conclusion</h1>
 <p>The feature option in <code>cargo tree</code> is a very powerful tool in fighting against the subtle way dependencies and features in them can creep into your codebase.</p>
-<p>Since it is close to christmas I want to make a whishlist to improve the situation:</p>
+<p>Since it is close to Christmas I want to make a wishlist to improve the situation:</p>
 <ol>
 <li>A <code>cargo deny</code> like tool that allows me to white/blacklist features in dependencies.</li>
-<li><code>cargo tree</code> should generate a computer readable format (ron/json whatever) to facilitate point 1.</li>
-<li>In a perfect world there would be a <code>cargo tree-tui</code> allowing to interactively inspect dependencies, their features and fan in (who uses it) and fan out (what it is using).</li>
+<li><code>cargo tree</code> should generate a computer-readable format (ron/json whatever) to facilitate point 1.</li>
+<li>In a perfect world there would be a <code>cargo tree-tui</code> allowing to interactively inspect dependencies, their features, and fan in (who uses it) and fan out (what it is using).</li>
 </ol>
-<p>That being said <code>cargo tree</code> seems underutilized, so go and run it on your bevy project to figure out what features of dependencies like Bevy you actually compile. This can have a huge impact on your wasm binary size!</p>
+<p>That being said <code>cargo tree</code> seems underutilized, so go and run it on your Bevy project to figure out what features of dependencies like Bevy you actually compile. This can have a huge impact on your wasm binary size!</p>
 <hr />
 <p>Do you need support building your Bevy or Rust project? Our team of experts can support you! <a href="https://rustunit.com/contact/">Contact us.</a></p>
 

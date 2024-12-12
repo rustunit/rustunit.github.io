@@ -3,7 +3,7 @@ title = "Rust crate feature debugging"
 date = 2024-12-12
 [extra]
 tags=["rust","bevy","cargo"] 
-hidden = false
+hidden = true
 custom_summary = "Figure out what enabled a feature in a crate in your dependencies breaking your build."
 +++
 
@@ -79,7 +79,7 @@ Running `cargo tree -e features` in our repository root we get over 3.000 lines 
 │   │       └── tracing-attributes v0.1.28 (proc-macro)
 ```
 
-Luckily we know know already what 
+Luckily we know know already what feature we are looking for: `basis-universal`, so lets search for `bevy feature "basis-universal"`:
 
 ```sh
 ├── bevy_libgdx_atlas feature "default"
@@ -88,7 +88,12 @@ Luckily we know know already what
 │       │   ├── bevy v0.15.0 (*)
 ```
 
-`cargo tree -e features -p bevy --invert`:
+Here we go. Our own crate `bevy_libgdx_atlas` enables the feature `basis-universal` which in turn enables the dependency `basis-universal` which breaks our build on **wasm**. That makes it easier to fix. Funny enough it was used to enable `bevy_image` while trying to depend on the smallest subset of features of `bevy`. This is a known in Bevy 0.15, see [issue #16563](https://github.com/bevyengine/bevy/issues/16563). But there is a cleaner workaround by just enabling the `bevy_image` feature.
+
+## Improving ergonomics
+
+In case you run into multiple crates doing this and depending on said feature it is more ergonomic to invert the tree using: `cargo tree -e features -p bevy --invert`.
+With this we limit our root to `bevy` and we will find *one* entry for the feature and a subtree of dependencies using it:
 
 ```sh
 ├── bevy feature "basis-universal"
@@ -97,10 +102,17 @@ Luckily we know know already what
 │           └── tinytakeoff v0.1.1
 ```
 
-# How to make this more ergonomic
+# Conclusion
 
-* `cargo tree` should generate a computer readable format
-* a `cargo tree-tui` would be nice, allowing to interactively inspect dependencies, their features and fan in (who uses it) and fan out (what it is using)
+The feature option in `cargo tree` is a very powerful tool in fighting against the subtle way dependencies and features in them can creep into your codebase.
+
+Since it is close to christmas I want to make a whishlist to improve the situation:
+
+1. A `cargo deny` like tool that allows me to white/blacklist features in dependencies.
+2. `cargo tree` should generate a computer readable format (ron/json whatever) to facilitate point 1.
+3. In a perfect world there would be a `cargo tree-tui` allowing to interactively inspect dependencies, their features and fan in (who uses it) and fan out (what it is using).
+
+That being said `cargo tree` seems underutilized, so go and run it on your bevy project to figure out what features of dependencies like Bevy you actually compile. This can have a huge impact on your wasm binary size!
 
 ---
 

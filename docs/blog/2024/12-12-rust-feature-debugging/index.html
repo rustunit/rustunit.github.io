@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>rustunit</title>
+    <meta name="description" content="Rustunit offers software development consulting with a focus on rust, game-development and large scale distributed backend services.">
+
+    <link rel="stylesheet" href="https://rustunit.com/fonts.css">
+    <link rel="stylesheet" href="https://rustunit.com/style.css">
+
+    <script src="https://cdn.usefathom.com/script.js" data-site="TSUIPVAW" defer></script>
+</head>
+
+<body>
+    <header>
+        <a href="https://rustunit.com/">HOME</a>
+        <a href="https://rustunit.com/#games">GAMES</a>
+        <a href="https://rustunit.com/blog/">BLOG</a>
+        <a href="https://rustunit.com/contact/">CONTACT</a>
+    </header>
+    
+<div id="blogpage">
+    <div class="date">2024-12-12</div>
+    
+    <div class="hidden">hidden</div>
+    
+    <h1 class="title">
+        Rust crate feature debugging
+    </h1>
+    <div class="content">
+        <p>In this short post we look at how to debug a recent build breakage we encountered due to a <em>feature</em> being enabled on one of our dependencies that is not compatible with our build target: <strong>wasm</strong>.</p>
+<h1 id="what-happened">What happened</h1>
+<p>After porting our bevy based game <a href="https://tinytakeoff.com">tinytakeoff</a> to the newest Bevy release: <a href="https://bevyengine.org/news/bevy-0-15/">0.15</a> our build broke with the following error on <strong>wasm</strong>:</p>
+<pre data-lang="sh" style="background-color:#212121;color:#eeffff;" class="language-sh "><code class="language-sh" data-lang="sh"><span>cargo:warning</span><span style="color:#89ddff;">=</span><span style="color:#c3e88d;">In </span><span style="color:#82aaff;">file included from vendor/basis_universal/encoder/pvpngreader.cpp:14:
+</span><span>cargo:warning</span><span style="color:#89ddff;">=</span><span style="color:#c3e88d;">vendor/basis_universal/encoder/../transcoder/basisu.h:53:10: </span><span style="color:#82aaff;">fatal error: </span><span style="color:#89ddff;">&#39;</span><span style="color:#c3e88d;">stdlib.h</span><span style="color:#89ddff;">&#39;</span><span style="color:#82aaff;"> file not found
+</span><span>cargo:warning</span><span style="color:#89ddff;">=   </span><span style="color:#82aaff;">53 </span><span style="color:#89ddff;">| </span><span style="font-style:italic;color:#4a4a4a;">#include &lt;stdlib.h&gt;
+</span><span>cargo:warning</span><span style="color:#89ddff;">=      |          </span><span style="color:#82aaff;">^</span><span style="font-style:italic;color:#ff5370;">~~~~~~~~~
+</span><span>cargo:warning</span><span style="color:#89ddff;">=</span><span style="color:#c3e88d;">1 </span><span style="color:#82aaff;">error generated.
+</span></code></pre>
+<p>So that looks like some crate tries to build some c code under the hood. That is not a problem on native build targets but wont fly on <strong>wasm</strong>.</p>
+<p>This happens in the <code>basis-universal</code> crate, what could that be good for? Reading up on it's <a href="https://crates.io/crates/basis-universal">crates.io page</a> we find out that it is:</p>
+<blockquote>
+<p>Bindings for Binomial LLC's basis-universal Supercompressed GPU Texture Codec</p>
+</blockquote>
+<p>Looking into the <a href="https://bevyengine.org/learn/migration-guides/0-14-to-0-15">Bevy Migration Guide for 0.14 to 0.15</a> we find exactly one <a href="https://bevyengine.org/learn/migration-guides/0-14-to-0-15/#add-feature-requirement-info-to-image-loading-docs">place</a> of it being mentioned:</p>
+<img src="screen1.png" alt="changelog screenshot" class="centered" style="max-width: 70%"/>
+<p>So this dependency is for sure nothing we need as we did not start making use of said image format. How did it get introduced?</p>
+<p>Let's find the cause for this.</p>
+<h1 id="how-to-find-the-cause">How to find the cause</h1>
+<p>We first want to find out where in our tree of dependencies this one is used. <code>cargo tree</code> is the tool to help you analyze your dependencies as the graph structure they make up.</p>
+<p>When running <code>cargo tree</code> we get get over 1.000 lines of output where we can search for <code>basis-universal</code>:</p>
+<pre data-lang="sh" style="background-color:#212121;color:#eeffff;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#82aaff;">│       │   ├── bevy_image v0.15.0
+</span><span style="color:#82aaff;">│       │   │   ├── basis-universal v0.3.1
+</span><span style="color:#82aaff;">│       │   │   │   ├── basis-universal-sys v0.3.1
+</span><span style="color:#82aaff;">│       │   │   │   │   </span><span style="font-style:italic;color:#c792ea;">[</span><span style="color:#82aaff;">build</span><span style="color:#89ddff;">-</span><span style="color:#82aaff;">dependencies</span><span style="font-style:italic;color:#c792ea;">]
+</span><span style="color:#82aaff;">│       │   │   │   │   └── cc v1.2.3 (</span><span style="color:#89ddff;">*</span><span>)
+</span></code></pre>
+<p>We got a winner. It is used by <code>bevy_image</code>. The problem is that we do not know why. Based on the changelog linked above we know it is supposed to be behind a <code>feature</code> flag called <code>basis_universal</code>, looking at our <code>Cargo.toml</code> we do not enable it though.</p>
+<blockquote>
+<p>Cargo will enable the minimum subset of <code>features</code> needed so that every dependency using <code>bevy</code> get the features they ask for.</p>
+</blockquote>
+<p>The question therefore is: Which crate asks for this feature?</p>
+<h1 id="playing-cargo-feature-detective">Playing Cargo Feature Detective</h1>
+<p>There is a little known feature in <code>cargo tree</code> that allows us to not only see our dependency tree but also the features that are enabled in each crate.</p>
+<p>Running <code>cargo tree -e features</code> in our repository root we get over 3.000 lines of this:</p>
+<pre data-lang="sh" style="background-color:#212121;color:#eeffff;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#82aaff;">├── winit v0.30.5
+</span><span style="color:#82aaff;">│   ├── tracing v0.1.41
+</span><span style="color:#82aaff;">│   │   ├── tracing-core v0.1.33
+</span><span style="color:#82aaff;">│   │   │   └── once_cell feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">default</span><span style="color:#89ddff;">&quot;
+</span><span style="color:#82aaff;">│   │   │       ├── once_cell v1.20.2
+</span><span style="color:#82aaff;">│   │   │       └── once_cell feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">std</span><span style="color:#89ddff;">&quot;
+</span><span style="color:#82aaff;">│   │   │           ├── once_cell v1.20.2
+</span><span style="color:#82aaff;">│   │   │           └── once_cell feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">alloc</span><span style="color:#89ddff;">&quot;
+</span><span style="color:#82aaff;">│   │   │               ├── once_cell v1.20.2
+</span><span style="color:#82aaff;">│   │   │               └── once_cell feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">race</span><span style="color:#89ddff;">&quot;
+</span><span style="color:#82aaff;">│   │   │                   └── once_cell v1.20.2
+</span><span style="color:#82aaff;">│   │   ├── pin-project-lite feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">default</span><span style="color:#89ddff;">&quot;
+</span><span style="color:#82aaff;">│   │   │   └── pin-project-lite v0.2.15
+</span><span style="color:#82aaff;">│   │   └── tracing-attributes feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">default</span><span style="color:#89ddff;">&quot;
+</span><span style="color:#82aaff;">│   │       └── tracing-attributes v0.1.28 (proc-macro</span><span>)
+</span></code></pre>
+<p>Luckily we know know already what feature we are looking for: <code>basis-universal</code>, so lets search for <code>bevy feature "basis-universal"</code>:</p>
+<pre data-lang="sh" style="background-color:#212121;color:#eeffff;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#82aaff;">├── bevy_libgdx_atlas feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">default</span><span style="color:#89ddff;">&quot;
+</span><span style="color:#82aaff;">│   └── bevy_libgdx_atlas v0.3.0
+</span><span style="color:#82aaff;">│       ├── bevy feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">basis-universal</span><span style="color:#89ddff;">&quot;
+</span><span style="color:#82aaff;">│       │   ├── bevy v0.15.0 (</span><span style="color:#89ddff;">*</span><span>)
+</span></code></pre>
+<p>Here we go. Our own crate <code>bevy_libgdx_atlas</code> enables the feature <code>basis-universal</code> which in turn enables the dependency <code>basis-universal</code> which breaks our build on <strong>wasm</strong>. That makes it easier to fix. Funny enough it was used to enable <code>bevy_image</code> while trying to depend on the smallest subset of features of <code>bevy</code>. This is a known in Bevy 0.15, see <a href="https://github.com/bevyengine/bevy/issues/16563">issue #16563</a>. But there is a cleaner workaround by just enabling the <code>bevy_image</code> feature.</p>
+<h2 id="improving-ergonomics">Improving ergonomics</h2>
+<p>In case you run into multiple crates doing this and depending on said feature it is more ergonomic to invert the tree using: <code>cargo tree -e features -p bevy --invert</code>.
+With this we limit our root to <code>bevy</code> and we will find <em>one</em> entry for the feature and a subtree of dependencies using it:</p>
+<pre data-lang="sh" style="background-color:#212121;color:#eeffff;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#82aaff;">├── bevy feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">basis-universal</span><span style="color:#89ddff;">&quot;
+</span><span style="color:#82aaff;">│   └── bevy_libgdx_atlas v0.3.0
+</span><span style="color:#82aaff;">│       └── bevy_libgdx_atlas feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">default</span><span style="color:#89ddff;">&quot;
+</span><span style="color:#82aaff;">│           └── tinytakeoff v0.1.1
+</span></code></pre>
+<h1 id="conclusion">Conclusion</h1>
+<p>The feature option in <code>cargo tree</code> is a very powerful tool in fighting against the subtle way dependencies and features in them can creep into your codebase.</p>
+<p>Since it is close to christmas I want to make a whishlist to improve the situation:</p>
+<ol>
+<li>A <code>cargo deny</code> like tool that allows me to white/blacklist features in dependencies.</li>
+<li><code>cargo tree</code> should generate a computer readable format (ron/json whatever) to facilitate point 1.</li>
+<li>In a perfect world there would be a <code>cargo tree-tui</code> allowing to interactively inspect dependencies, their features and fan in (who uses it) and fan out (what it is using).</li>
+</ol>
+<p>That being said <code>cargo tree</code> seems underutilized, so go and run it on your bevy project to figure out what features of dependencies like Bevy you actually compile. This can have a huge impact on your wasm binary size!</p>
+<hr />
+<p>Do you need support building your Bevy or Rust project? Our team of experts can support you! <a href="https://rustunit.com/contact/">Contact us.</a></p>
+
+    </div>
+</div>
+
+    <footer>
+        
+        <div class="links">
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.linkedin.com&#x2F;company&#x2F;rustunit&#x2F;" title="LinkedIn">
+                <img alt="LinkedIn" class="icon" src="https://rustunit.com/icons/linkedin.svg" />
+            </a>
+            
+            <a rel="me" href="&#x2F;contact" title="Contact">
+                <img alt="Contact" class="icon" src="https://rustunit.com/icons/mail.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;github.com&#x2F;rustunit" title="GitHub">
+                <img alt="GitHub" class="icon" src="https://rustunit.com/icons/github.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.youtube.com&#x2F;@rustunit_com" title="YouTube">
+                <img alt="YouTube" class="icon" src="https://rustunit.com/icons/youtube.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;mastodon.social&#x2F;@rustunit" title="Mastodon">
+                <img alt="Mastodon" class="icon" src="https://rustunit.com/icons/mastodon.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;discord.gg&#x2F;rZv4uxSQx3" title="Discord">
+                <img alt="Discord" class="icon" src="https://rustunit.com/icons/discord.svg" />
+            </a>
+            
+        </div>
+        
+
+        <div>Copyright © 2024 Rustunit B.V.</div>
+    </footer>
+</body>
+
+</html>

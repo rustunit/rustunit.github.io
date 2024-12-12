@@ -21,7 +21,7 @@ cargo:warning=      |          ^~~~~~~~~~
 cargo:warning=1 error generated.
 ```
 
-So it looks like some crate is trying to build c code under the hood. That is not a problem on native build targets but it won't fly on **wasm**. 
+So it looks like some crate is trying to build C-code under the hood which depends on `stdlib.h`. That is not a problem on native build targets but it won't fly on **wasm**. 
 
 This happens in the `basis-universal` crate, what could that be good for? Reading up on it's [crates.io page](https://crates.io/crates/basis-universal) we find out that it is:
 

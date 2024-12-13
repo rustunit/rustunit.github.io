@@ -1,17 +1,17 @@
 +++
-title = "Rust crate feature debugging"
+title = "Rust Crate Feature Debugging"
 date = 2024-12-12
 [extra]
 tags=["rust","bevy","cargo"] 
 hidden = true
-custom_summary = "Figure out what enabled a feature in a crate in your dependencies breaking your build."
+custom_summary = "Want to figure out what dependency enabled a feature which breaks your build?"
 +++
 
-In this short post we look at how to debug a recent build breakage we encountered due to a *feature* being enabled on one of our dependencies that is not compatible with our build target: **wasm**.
+In this short post, we will look at how we recently debugged a build breaking due to a *feature* being enabled on one of our dependencies that is not compatible with one of our build targets: **Wasm**.
 
-# What happened
+# What Happened
 
-After porting our bevy based game [tinytakeoff](https://tinytakeoff.com) to the newest Bevy release: [0.15](https://bevyengine.org/news/bevy-0-15/) our build broke with the following error on **wasm**:
+After porting our Bevy-based game, [TinyTakeoff](https://tinytakeoff.com) to the newest Bevy release at the time of writing this, [0.15](https://bevyengine.org/news/bevy-0-15/), our build broke with the following error on **Wasm**:
 
 ```sh
 cargo:warning=In file included from vendor/basis_universal/encoder/pvpngreader.cpp:14:
@@ -21,25 +21,25 @@ cargo:warning=      |          ^~~~~~~~~~
 cargo:warning=1 error generated.
 ```
 
-So it looks like some crate is trying to build C-code under the hood which depends on `stdlib.h`. That is not a problem on native build targets but it won't fly on **wasm**. 
+Looks like some crate is trying to build C-code under the hood, which depends on `stdlib.h`. That is not a problem on native build targets, but it won't work on **Wasm**. 
 
-This happens in the `basis-universal` crate, what could that be good for? Reading up on it's [crates.io page](https://crates.io/crates/basis-universal) we find out that it is:
+This happens in the `basis-universal` crate. Wonder what that is for? Reading up on its [crates.io page](https://crates.io/crates/basis-universal), we can see that it is:
 
 > Bindings for Binomial LLC's basis-universal Supercompressed GPU Texture Codec
 
-Looking into the [Bevy Migration Guide for 0.14 to 0.15](https://bevyengine.org/learn/migration-guides/0-14-to-0-15) we find exactly one [place](https://bevyengine.org/learn/migration-guides/0-14-to-0-15/#add-feature-requirement-info-to-image-loading-docs) of it being mentioned: 
+Looking into the [Bevy Migration Guide for 0.14 to 0.15](https://bevyengine.org/learn/migration-guides/0-14-to-0-15) we find exactly one [place](https://bevyengine.org/learn/migration-guides/0-14-to-0-15/#add-feature-requirement-info-to-image-loading-docs) where it is mentioned:
 
 <img src="screen1.png" alt="changelog screenshot" class="centered" style="max-width: 70%"/>
 
-So this dependency is for sure nothing we need as we did not start making use of said image format. How did it get introduced?
+So, this dependency is nothing that we need or want, given we are not making use of that image format. How did it get introduced into our dependencies in the first place?
 
-Let's find the cause for this.
+Let's dive right in and find out!
 
-# How to find the cause
+# How to Find the Cause
 
-We first want to find out where in our tree of dependencies this one is used. `cargo tree` is the tool to help you analyze your dependencies as the graph structure they make up. 
+We first want to find out _where_ in our dependency tree that `basis-universal` is brought in from. `cargo tree` is the tool to help you analyze your dependencies by showing them in a nifty graph structure. 
 
-When running `cargo tree` we get over 1.000 lines of output where we can search for `basis-universal`:
+When running `cargo tree`, we get over 1.000 outputted lines that we have to parse, for somewhere inside this haystack is our culprit
 
 ```sh
 │       │   ├── bevy_image v0.15.0
@@ -49,17 +49,17 @@ When running `cargo tree` we get over 1.000 lines of output where we can search 
 │       │   │   │   │   └── cc v1.2.3 (*)
 ```
 
-We got a winner. It is used by `bevy_image`. The problem is that we do not know why. Based on the changelog linked above we know it is supposed to be behind a `feature` flag called `basis_universal`, looking at our `Cargo.toml` we do not enable it though.
+We got a winner! It is used by `bevy_image`. The problem now is that we do not know why `bevy_image` is suddenly bringing this in. Based on the changelog linked above, we know it is supposed to be behind a `feature` flag on the `bevy` crate, called `basis_universal`. Looking at our `Cargo.toml`, we don't enable it.
 
 > Cargo will enable the minimum subset of `features` needed so that every dependency using `bevy` gets the features they ask for.
 
-The question therefore is: Which crate asks for this feature?
+The question then becomes, which crate enables this feature?
 
 # Playing Cargo Feature Detective
 
-There is a little-known feature in `cargo tree` that allows us to not only see our dependency tree but also the features that are enabled in each crate. 
+There is a little-known feature in `cargo tree` that allows us to not only see our dependency tree, but also the features that are enabled in each crate that is pulled in. 
 
-Running `cargo tree -e features` in our repository root we get over 3.000 lines of this:
+Running `cargo tree -e features` in our repository root, we get over 3.000 lines of this:
 
 ```sh
 ├── winit v0.30.5
@@ -79,7 +79,7 @@ Running `cargo tree -e features` in our repository root we get over 3.000 lines 
 │   │       └── tracing-attributes v0.1.28 (proc-macro)
 ```
 
-Luckily we now know already what feature we are looking for: `basis-universal`, so let's search for `bevy feature "basis-universal"`:
+Luckily, we now know what feature we are looking for, `basis-universal`. So, let's search for `bevy feature "basis-universal"`:
 
 ```sh
 ├── bevy_libgdx_atlas feature "default"
@@ -88,12 +88,12 @@ Luckily we now know already what feature we are looking for: `basis-universal`, 
 │       │   ├── bevy v0.15.0 (*)
 ```
 
-Here we go. Our own crate `bevy_libgdx_atlas` enables the feature `basis-universal` which in turn enables the dependency `basis-universal` which breaks our build on **wasm**. That makes it easier to fix. Funny enough it was used to enable `bevy_image` while trying to depend on the smallest subset of features of `bevy`. This is a known issue in Bevy 0.15, see [#16563](https://github.com/bevyengine/bevy/issues/16563). But there is a cleaner workaround by just enabling the `bevy_image` feature in `bevy_internal` see [here](https://github.com/rustunit/bevy_libgdx_atlas/commit/20cb2e99ef8dd696dfbbff3ef120591cae82703b).
+There we go, and would you look at that? One of our own crates, `bevy_libgdx_atlas`, enables the feature `basis-universal`, which in turn enables the dependency `basis-universal`, which then breaks our build on **Wasm**. At least it being our own crate will make it easier to fix this time around. Funnily enough, it was used to enable `bevy_image` while trying to depend on the smallest subset of features of `bevy`. This is a known issue in Bevy 0.15, see [#16563](https://github.com/bevyengine/bevy/issues/16563), but, luckily, there is a cleaner workaround to this issue. You just need to enable the `bevy_image` feature in `bevy_internal` see [here](https://github.com/rustunit/bevy_libgdx_atlas/commit/20cb2e99ef8dd696dfbbff3ef120591cae82703b).
 
-## Improving ergonomics
+## Improving Ergonomics
 
-In case you run into multiple crates doing this and depending on said feature it is more ergonomic to invert the tree using: `cargo tree -e features -p bevy --invert`.
-With this we limit our root to `bevy` and we will find *one* entry for the feature and a subtree of dependencies using it:
+In case you run into multiple crates enabling an unwanted feature, it can be more ergonomic to invert the tree using: `cargo tree -e features -p bevy --invert`.
+With this command, we limit our root to `bevy`, and we will find *one* entry for the feature, and a subtree of dependencies using it:
 
 ```sh
 ├── bevy feature "basis-universal"
@@ -104,15 +104,15 @@ With this we limit our root to `bevy` and we will find *one* entry for the featu
 
 # Conclusion
 
-The feature option in `cargo tree` is a very powerful tool in fighting against the subtle way dependencies and features in them can creep into your codebase.
+The feature option in `cargo tree` is a powerful tool in fighting against the subtle ways that dependencies, and the features enabled by them, can creep into your codebase.
 
-Since it is close to Christmas I want to make a wishlist to improve the situation:
+Since it is close to Christmas, I want to make a small wishlist to improve the situation:
 
-1. A `cargo deny` like tool that allows me to white/blacklist features in dependencies.
-2. `cargo tree` should generate a computer-readable format (ron/json whatever) to facilitate point 1.
-3. In a perfect world there would be a `cargo tree-tui` allowing to interactively inspect dependencies, their features, and fan in (who uses it) and fan out (what it is using).
+1. A `cargo deny`-like tool that allows me to whitelist, and or blacklist, features in dependencies.
+2. `cargo tree` should generate a computer-readable format (RON, JSON, or whatever) to help with the first point.
+3. In a perfect world, there would be a `cargo tree-tui` allowing me to interactively inspect dependencies, their features, and fan in (who uses it) and fan out (what it is using).
 
-That being said `cargo tree` seems underutilized, so go and run it on your Bevy project to figure out what features of dependencies like Bevy you actually compile. This can have a huge impact on your wasm binary size!
+That being said, `cargo tree` seems underused, so go and run it on your Bevy project yourself and see what features of dependencies like Bevy you actually compile. This can have a huge impact on your Wasm binary size!
 
 ---
 

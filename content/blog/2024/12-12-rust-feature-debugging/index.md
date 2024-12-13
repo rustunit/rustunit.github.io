@@ -53,7 +53,7 @@ We got a winner! It is used by `bevy_image`. The problem now is that we do not k
 
 > Cargo will enable the minimum subset of `features` needed so that every dependency using `bevy` gets the features they ask for.
 
-The question then becomes, which crate enables this feature?
+The question therefore is, which crate enables this feature?
 
 # Playing Cargo Feature Detective
 

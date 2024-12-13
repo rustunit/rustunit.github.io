@@ -39,7 +39,7 @@ Let's dive right in and find out!
 
 We first want to find out _where_ in our dependency tree that `basis-universal` is brought in from. `cargo tree` is the tool to help you analyze your dependencies by showing them in a nifty graph structure. 
 
-When running `cargo tree`, we get over 1.000 outputted lines that we have to parse, for somewhere inside this haystack is `basis-universal`:
+When running `cargo tree`, we get over 1.000 outputted lines that we have to search, for somewhere inside this haystack is `basis-universal`:
 
 ```sh
 │       │   ├── bevy_image v0.15.0

@@ -9,7 +9,7 @@ custom_summary = "In this post, we talk about how to integrate web native APIs v
 
 <img src="demo.gif" alt="demo" style="width: 50%; max-width: 500px" class="inline-img" />
 
-In this post, we talk about how to integrate web native APIs via WASM with Bevy.
+In this post, we talk about how to integrate web native APIs via WASM with [Bevy](https://bevyengine.org).
 
 We utilize the recently released [bevy_channel_trigger](https://crates.io/crates/bevy_channel_trigger) crate, [wasm-bindgen](https://github.com/rustwasm/wasm-bindgen) and [gloo](https://github.com/rustwasm/gloo).
 

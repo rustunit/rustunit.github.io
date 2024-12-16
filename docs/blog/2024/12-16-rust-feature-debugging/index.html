@@ -23,9 +23,7 @@
     </header>
     
 <div id="blogpage">
-    <div class="date">2024-12-12</div>
-    
-    <div class="hidden">hidden</div>
+    <div class="date">2024-12-16</div>
     
     <h1 class="title">
         Rust crate feature debugging
@@ -40,8 +38,8 @@
 </span><span>cargo:warning</span><span style="color:#89ddff;">=      |          </span><span style="color:#82aaff;">^</span><span style="font-style:italic;color:#ff5370;">~~~~~~~~~
 </span><span>cargo:warning</span><span style="color:#89ddff;">=</span><span style="color:#c3e88d;">1 </span><span style="color:#82aaff;">error generated.
 </span></code></pre>
-<p>So it looks like some crate is trying to build C-code under the hood which depends on <code>stdlib.h</code>. That is not a problem on native build targets but it won't fly on <strong>wasm</strong>.</p>
-<p>This happens in the <code>basis-universal</code> crate, what could that be good for? Reading up on it's <a href="https://crates.io/crates/basis-universal">crates.io page</a> we find out that it is:</p>
+<p>So it looks like some crate is trying to build C-code under the hood which depends on <code>stdlib.h</code>. While this is not a problem on native build targets, it will not work on <strong>Wasm</strong>.</p>
+<p>The code in question belongs to the <code>basis-universal</code> crate, what could that be good for? Reading up on it's <a href="https://crates.io/crates/basis-universal">crates.io page</a> we find out that it is:</p>
 <blockquote>
 <p>Bindings for Binomial LLC's basis-universal Supercompressed GPU Texture Codec</p>
 </blockquote>
@@ -51,7 +49,7 @@
 <p>Let's find the cause for this.</p>
 <h1 id="how-to-find-the-cause">How to find the cause</h1>
 <p>We first want to find out where in our tree of dependencies this one is used. <code>cargo tree</code> is the tool to help you analyze your dependencies as the graph structure they make up.</p>
-<p>When running <code>cargo tree</code> we get over 1.000 lines of output where we can search for <code>basis-universal</code>:</p>
+<p>When running <code>cargo tree</code>, we get over 1.000 outputted lines that we have to search, for somewhere inside this haystack is <code>basis-universal</code>:</p>
 <pre data-lang="sh" style="background-color:#212121;color:#eeffff;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#82aaff;">│       │   ├── bevy_image v0.15.0
 </span><span style="color:#82aaff;">│       │   │   ├── basis-universal v0.3.1
 </span><span style="color:#82aaff;">│       │   │   │   ├── basis-universal-sys v0.3.1

@@ -1,9 +1,8 @@
 +++
 title = "Rust crate feature debugging"
-date = 2024-12-12
+date = 2024-12-16
 [extra]
 tags=["rust","bevy","cargo"] 
-hidden = true
 custom_summary = "Figure out what enabled a feature in a crate in your dependencies breaking your build."
 +++
 
@@ -21,9 +20,9 @@ cargo:warning=      |          ^~~~~~~~~~
 cargo:warning=1 error generated.
 ```
 
-So it looks like some crate is trying to build C-code under the hood which depends on `stdlib.h`. That is not a problem on native build targets but it won't fly on **wasm**. 
+So it looks like some crate is trying to build C-code under the hood which depends on `stdlib.h`. While this is not a problem on native build targets, it will not work on **Wasm**. 
 
-This happens in the `basis-universal` crate, what could that be good for? Reading up on it's [crates.io page](https://crates.io/crates/basis-universal) we find out that it is:
+The code in question belongs to the `basis-universal` crate, what could that be good for? Reading up on it's [crates.io page](https://crates.io/crates/basis-universal) we find out that it is:
 
 > Bindings for Binomial LLC's basis-universal Supercompressed GPU Texture Codec
 
@@ -39,7 +38,7 @@ Let's find the cause for this.
 
 We first want to find out where in our tree of dependencies this one is used. `cargo tree` is the tool to help you analyze your dependencies as the graph structure they make up. 
 
-When running `cargo tree` we get over 1.000 lines of output where we can search for `basis-universal`:
+When running `cargo tree`, we get over 1.000 outputted lines that we have to search, for somewhere inside this haystack is `basis-universal`:
 
 ```sh
 │       │   ├── bevy_image v0.15.0

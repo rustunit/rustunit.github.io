@@ -15,7 +15,7 @@ On the one hand a game is supposed to run smoothly which requires a high enough 
 
 In this short post we talk about how to balance the two and how to adapt the balance based on your specific apps needs.
 
-We will also find out why the default settings of Bevy on mobile used to lead to the worrysome statistics in the xcode debugger you see on the right - indicating that we run at ∞ fps and using 200% CPU 🥵.  
+We will also find out why the default settings of Bevy on mobile used to lead to the worrisome statistics in the xcode debugger you see on the right - indicating that we run at ∞ fps and using 200% CPU 🥵.  
 
 # Why mobile has to be treated differently
 
@@ -31,9 +31,9 @@ The Bevy engine is a general purpose game engine. It is not specifically designe
 
 So how to fix this problem? The short answer is: Limit the framerate.
 
-The catch is though that your device might vsync at 60Hz already making you think the problem lies somewhere else. The footgun is that even if the rendering is limited to 60Hz Bevy will - by default - still update all your systems as often as it possibly can even if rendering updates are only happening in a 60 fps rate.
+The catch is though that your device might VSync at 60Hz already making you think the problem lies somewhere else. The foot-gun is that even if the rendering is limited to 60Hz Bevy will - by default - still update all your systems as often as it possibly can even if rendering updates are only happening in a 60 fps rate.
 
-The solution is to configure the refresh rate of winit:
+The solution is to configure the refresh rate of *winit*:
 
 ```rust
 app.add_systems(Startup, init_refresh_rate);
@@ -43,7 +43,7 @@ fn init_refresh_rate(mut winit: ResMut<WinitSettings>) {
 }
 ```
 
-Using `UpdateMode::reactive` will lead to bevy refreshing our systems also based on user input like mouse events as they happen but in an abscence of any event to *react* to it will limit the refresh rate to 60Hz. This is a sensible default for most mobile games.
+Using `UpdateMode::reactive` will lead to bevy refreshing our systems also based on user input like mouse events as they happen but in an absence of any event to *react* to it will limit the refresh rate to 60Hz. This is a sensible default for most mobile games.
 
 But we can do better. We can adapt this at runtime.
 
@@ -51,7 +51,7 @@ But we can do better. We can adapt this at runtime.
 
 In the above example we simply configure this 60Hz rate on startup. But you can adapt this at any time. This allows you to reduce the refresh rate in menus or more static situations and increase it during action phases where a low fps would lead to a reduced user experience.
 
-A simple way would be to tie it to gamestates:
+A simple way would be to tie it to game states:
 
 ```rust
 app.add_systems(OnEnter(GameState::FastAction), high_fps);

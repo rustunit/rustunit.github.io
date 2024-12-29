@@ -35,7 +35,7 @@
 <p>Mobile Games have to walk a fine line between rendering performance and energy conservation.</p>
 <p>On the one hand a game is supposed to run smoothly which requires a high enough framerate and yet not to consume too much energy and therefore draining battery too quickly.</p>
 <p>In this short post we talk about how to balance the two and how to adapt the balance based on your specific apps needs.</p>
-<p>We will also find out why the default settings of Bevy on mobile used to lead to the worrysome statistics in the xcode debugger you see on the right - indicating that we run at ∞ fps and using 200% CPU 🥵.</p>
+<p>We will also find out why the default settings of Bevy on mobile used to lead to the worrisome statistics in the xcode debugger you see on the right - indicating that we run at ∞ fps and using 200% CPU 🥵.</p>
 <h1 id="why-mobile-has-to-be-treated-differently">Why mobile has to be treated differently</h1>
 <p>Traditionally games are rendered at the highest possible framerate. In case of PC and console games this means utilizing the hardware to the fullest maximizing fidelity, image and effect quality and overall richness of the experience.</p>
 <p>On mobile however, the situation is different. The hardware is not only less powerful but also the device is not designed to be cooled actively. Instead the heat has to be dissipated through the case and the screen. This means that the device can get <strong>hot</strong> quickly. On the other hand the phone battery is another limiting factor. The more energy the game consumes the quicker the <strong>battery</strong> will be drained. As a phone user I don't want to suddenly change my charging habits just because I played my game.</p>
@@ -45,19 +45,19 @@
 <p>The Bevy engine is a general purpose game engine. It is not specifically designed for mobile games. This means that the default settings are not optimized for mobile. This is not a problem as long as you are aware of it and know how to adjust the settings.</p>
 <h1 id="how-to-limit-processing">How to limit processing</h1>
 <p>So how to fix this problem? The short answer is: Limit the framerate.</p>
-<p>The catch is though that your device might vsync at 60Hz already making you think the problem lies somewhere else. The footgun is that even if the rendering is limited to 60Hz Bevy will - by default - still update all your systems as often as it possibly can even if rendering updates are only happening in a 60 fps rate.</p>
-<p>The solution is to configure the refresh rate of winit:</p>
+<p>The catch is though that your device might VSync at 60Hz already making you think the problem lies somewhere else. The foot-gun is that even if the rendering is limited to 60Hz Bevy will - by default - still update all your systems as often as it possibly can even if rendering updates are only happening in a 60 fps rate.</p>
+<p>The solution is to configure the refresh rate of <em>winit</em>:</p>
 <pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span>app</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">add_systems</span><span style="color:#89ddff;">(</span><span>Startup</span><span style="color:#89ddff;">,</span><span> init_refresh_rate</span><span style="color:#89ddff;">);
 </span><span>
 </span><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">init_refresh_rate</span><span style="color:#89ddff;">(</span><span style="color:#c792ea;">mut </span><span style="color:#f78c6c;">winit</span><span style="color:#89ddff;">: </span><span>ResMut</span><span style="color:#89ddff;">&lt;</span><span>WinitSettings</span><span style="color:#89ddff;">&gt;) {
 </span><span>    winit</span><span style="color:#89ddff;">.</span><span>focused_mode </span><span style="color:#89ddff;">= </span><span>UpdateMode</span><span style="color:#89ddff;">::</span><span>reactive</span><span style="color:#89ddff;">(</span><span>Duration</span><span style="color:#89ddff;">::</span><span>from_secs_f32</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">1.0 </span><span style="color:#89ddff;">/ </span><span style="color:#f78c6c;">60.0</span><span style="color:#89ddff;">));
 </span><span style="color:#89ddff;">}
 </span></code></pre>
-<p>Using <code>UpdateMode::reactive</code> will lead to bevy refreshing our systems also based on user input like mouse events as they happen but in an abscence of any event to <em>react</em> to it will limit the refresh rate to 60Hz. This is a sensible default for most mobile games.</p>
+<p>Using <code>UpdateMode::reactive</code> will lead to bevy refreshing our systems also based on user input like mouse events as they happen but in an absence of any event to <em>react</em> to it will limit the refresh rate to 60Hz. This is a sensible default for most mobile games.</p>
 <p>But we can do better. We can adapt this at runtime.</p>
 <h1 id="adaptable-framerate">Adaptable framerate</h1>
 <p>In the above example we simply configure this 60Hz rate on startup. But you can adapt this at any time. This allows you to reduce the refresh rate in menus or more static situations and increase it during action phases where a low fps would lead to a reduced user experience.</p>
-<p>A simple way would be to tie it to gamestates:</p>
+<p>A simple way would be to tie it to game states:</p>
 <pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span>app</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">add_systems</span><span style="color:#89ddff;">(</span><span>OnEnter</span><span style="color:#89ddff;">(</span><span>GameState</span><span style="color:#89ddff;">::</span><span>FastAction</span><span style="color:#89ddff;">),</span><span> high_fps</span><span style="color:#89ddff;">);
 </span><span>app</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">add_systems</span><span style="color:#89ddff;">(</span><span>OnExit</span><span style="color:#89ddff;">(</span><span>GameState</span><span style="color:#89ddff;">::</span><span>FastAction</span><span style="color:#89ddff;">),</span><span> low_fps</span><span style="color:#89ddff;">);
 </span><span>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>rustunit</title>
+    <meta name="description" content="Rustunit offers software development consulting with a focus on rust, game-development and large scale distributed backend services.">
+
+    <link rel="stylesheet" href="https://rustunit.com/fonts.css">
+    <link rel="stylesheet" href="https://rustunit.com/style.css">
+
+    <script src="https://cdn.usefathom.com/script.js" data-site="TSUIPVAW" defer></script>
+</head>
+
+<body>
+    <header>
+        <a href="https://rustunit.com/">HOME</a>
+        <a href="https://rustunit.com/#games">GAMES</a>
+        <a href="https://rustunit.com/blog/">BLOG</a>
+        <a href="https://rustunit.com/contact/">CONTACT</a>
+    </header>
+    
+<div id="blogpage">
+    <div class="date">2024-12-30</div>
+    
+    <div class="hidden">hidden</div>
+    
+    <h1 class="title">
+        Bevy Efficiency on Mobile
+    </h1>
+    <div class="content">
+        <img src="xcode-debugger.png" alt="demo" style="width: 40%; max-width: 400px" class="inline-img" />
+<p>Mobile Games have to walk a fine line between rendering performance and energy conservation.</p>
+<p>On the one hand a game is supposed to run smoothly which requires a high enough framerate and yet not to consume too much energy and therefore draining battery too quickly.</p>
+<p>In this short post we talk about how to balance the two and how to adapt the balance based on your specific apps needs.</p>
+<p>We will also find out why the default settings of Bevy on mobile used to lead to the worrysome statistics in the xcode debugger you see on the right - indicating that we run at ∞ fps and using 200% CPU 🥵.</p>
+<h1 id="why-mobile-has-to-be-treated-differently">Why mobile has to be treated differently</h1>
+<p>Traditionally games are rendered at the highest possible framerate. In case of PC and console games this means utilizing the hardware to the fullest maximizing fidelity, image and effect quality and overall richness of the experience.</p>
+<p>On mobile however, the situation is different. The hardware is not only less powerful but also the device is not designed to be cooled actively. Instead the heat has to be dissipated through the case and the screen. This means that the device can get <strong>hot</strong> quickly. On the other hand the phone battery is another limiting factor. The more energy the game consumes the quicker the <strong>battery</strong> will be drained. As a phone user I don't want to suddenly change my charging habits just because I played my game.</p>
+<blockquote>
+<p>Thierry: And the game is again heating my device like crazy 😭</p>
+</blockquote>
+<p>The Bevy engine is a general purpose game engine. It is not specifically designed for mobile games. This means that the default settings are not optimized for mobile. This is not a problem as long as you are aware of it and know how to adjust the settings.</p>
+<h1 id="how-to-limit-processing">How to limit processing</h1>
+<p>So how to fix this problem? The short answer is: Limit the framerate.</p>
+<p>The catch is though that your device might vsync at 60Hz already making you think the problem lies somewhere else. The footgun is that even if the rendering is limited to 60Hz Bevy will - by default - still update all your systems as often as it possibly can even if rendering updates are only happening in a 60 fps rate.</p>
+<p>The solution is to configure the refresh rate of winit:</p>
+<pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span>app</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">add_systems</span><span style="color:#89ddff;">(</span><span>Startup</span><span style="color:#89ddff;">,</span><span> init_refresh_rate</span><span style="color:#89ddff;">);
+</span><span>
+</span><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">init_refresh_rate</span><span style="color:#89ddff;">(</span><span style="color:#c792ea;">mut </span><span style="color:#f78c6c;">winit</span><span style="color:#89ddff;">: </span><span>ResMut</span><span style="color:#89ddff;">&lt;</span><span>WinitSettings</span><span style="color:#89ddff;">&gt;) {
+</span><span>    winit</span><span style="color:#89ddff;">.</span><span>focused_mode </span><span style="color:#89ddff;">= </span><span>UpdateMode</span><span style="color:#89ddff;">::</span><span>reactive</span><span style="color:#89ddff;">(</span><span>Duration</span><span style="color:#89ddff;">::</span><span>from_secs_f32</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">1.0 </span><span style="color:#89ddff;">/ </span><span style="color:#f78c6c;">60.0</span><span style="color:#89ddff;">));
+</span><span style="color:#89ddff;">}
+</span></code></pre>
+<p>Using <code>UpdateMode::reactive</code> will lead to bevy refreshing our systems also based on user input like mouse events as they happen but in an abscence of any event to <em>react</em> to it will limit the refresh rate to 60Hz. This is a sensible default for most mobile games.</p>
+<p>But we can do better. We can adapt this at runtime.</p>
+<h1 id="adaptable-framerate">Adaptable framerate</h1>
+<p>In the above example we simply configure this 60Hz rate on startup. But you can adapt this at any time. This allows you to reduce the refresh rate in menus or more static situations and increase it during action phases where a low fps would lead to a reduced user experience.</p>
+<p>A simple way would be to tie it to gamestates:</p>
+<pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span>app</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">add_systems</span><span style="color:#89ddff;">(</span><span>OnEnter</span><span style="color:#89ddff;">(</span><span>GameState</span><span style="color:#89ddff;">::</span><span>FastAction</span><span style="color:#89ddff;">),</span><span> high_fps</span><span style="color:#89ddff;">);
+</span><span>app</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">add_systems</span><span style="color:#89ddff;">(</span><span>OnExit</span><span style="color:#89ddff;">(</span><span>GameState</span><span style="color:#89ddff;">::</span><span>FastAction</span><span style="color:#89ddff;">),</span><span> low_fps</span><span style="color:#89ddff;">);
+</span><span>
+</span><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">high_fps</span><span style="color:#89ddff;">(</span><span style="color:#c792ea;">mut </span><span style="color:#f78c6c;">winit</span><span style="color:#89ddff;">: </span><span>ResMut</span><span style="color:#89ddff;">&lt;</span><span>WinitSettings</span><span style="color:#89ddff;">&gt;) {
+</span><span>    winit</span><span style="color:#89ddff;">.</span><span>focused_mode </span><span style="color:#89ddff;">= </span><span>UpdateMode</span><span style="color:#89ddff;">::</span><span>reactive</span><span style="color:#89ddff;">(</span><span>Duration</span><span style="color:#89ddff;">::</span><span>from_secs_f32</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">1.0 </span><span style="color:#89ddff;">/ </span><span style="color:#f78c6c;">60.0</span><span style="color:#89ddff;">));
+</span><span style="color:#89ddff;">}
+</span><span>
+</span><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">low_fps</span><span style="color:#89ddff;">(</span><span style="color:#c792ea;">mut </span><span style="color:#f78c6c;">winit</span><span style="color:#89ddff;">: </span><span>ResMut</span><span style="color:#89ddff;">&lt;</span><span>WinitSettings</span><span style="color:#89ddff;">&gt;) {
+</span><span>    winit</span><span style="color:#89ddff;">.</span><span>focused_mode </span><span style="color:#89ddff;">= </span><span>UpdateMode</span><span style="color:#89ddff;">::</span><span>reactive</span><span style="color:#89ddff;">(</span><span>Duration</span><span style="color:#89ddff;">::</span><span>from_secs_f32</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">1.0 </span><span style="color:#89ddff;">/ </span><span style="color:#f78c6c;">28.0</span><span style="color:#89ddff;">));
+</span><span style="color:#89ddff;">}
+</span></code></pre>
+<p>This solution reduces the fps (and the logical update rate) to 28Hz when we are not in the <code>GameState::FastAction</code> state.</p>
+<p>This logic can be made more complex of course and allow temporary bursts when an animation is happening for a short period outside the <code>GameState::FastAction</code> state. The possibilities are endless.</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>With Bevy <em>0.15</em> this solution became part of the official mobile example for more Bevy users to find: <a href="https://github.com/bevyengine/bevy/pull/16548/files">Bevy PR #16548</a>.</p>
+<p>The problem and finding this solution was a coincidence when investigating a <a href="https://github.com/bevyengine/bevy/issues/16541">regression</a> in Bevy <em>0.15</em> and it turned out that the machinery shown here to control refresh rate was in Bevy already since <em>0.14</em>.</p>
+<hr />
+<p>Do you need support building your Bevy or Rust project? Our team of experts can support you! <a href="https://rustunit.com/contact/">Contact us.</a></p>
+
+    </div>
+</div>
+
+    <footer>
+        
+        <div class="links">
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.linkedin.com&#x2F;company&#x2F;rustunit&#x2F;" title="LinkedIn">
+                <img alt="LinkedIn" class="icon" src="https://rustunit.com/icons/linkedin.svg" />
+            </a>
+            
+            <a rel="me" href="&#x2F;contact" title="Contact">
+                <img alt="Contact" class="icon" src="https://rustunit.com/icons/mail.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;github.com&#x2F;rustunit" title="GitHub">
+                <img alt="GitHub" class="icon" src="https://rustunit.com/icons/github.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.youtube.com&#x2F;@rustunit_com" title="YouTube">
+                <img alt="YouTube" class="icon" src="https://rustunit.com/icons/youtube.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;mastodon.social&#x2F;@rustunit" title="Mastodon">
+                <img alt="Mastodon" class="icon" src="https://rustunit.com/icons/mastodon.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;discord.gg&#x2F;rZv4uxSQx3" title="Discord">
+                <img alt="Discord" class="icon" src="https://rustunit.com/icons/discord.svg" />
+            </a>
+            
+        </div>
+        
+
+        <div>Copyright © 2024 Rustunit B.V.</div>
+    </footer>
+</body>
+
+</html>

@@ -1,9 +1,8 @@
 +++
 title = "Bevy Efficiency on Mobile"
-date = 2024-12-30
+date = 2025-01-02
 [extra]
 tags=["rust","bevy","mobile"] 
-hidden=true
 custom_summary = "Limit refresh rate to conserve energy and reduce heat production."
 +++
 

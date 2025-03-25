@@ -17,5 +17,6 @@ links = [
     { title = "YouTube", url = "https://www.youtube.com/@rustunit_com", icon = "youtube" },
     # { title = "Twitter", url = "https://twitter.com/rustunitcom", icon = "twitter" },
     { title = "Mastodon", url = "https://mastodon.social/@rustunit", icon = "mastodon" },
+    { title = "Bsky", url = "https://bsky.app/profile/rustunit.com", icon = "bsky" },
     { title = "Discord", url = "https://discord.gg/rZv4uxSQx3", icon = "discord" },
 ]

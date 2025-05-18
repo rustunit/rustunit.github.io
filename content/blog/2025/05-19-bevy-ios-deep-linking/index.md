@@ -1,13 +1,12 @@
 +++
 title = "iOS Deep-Linking with Bevy"
-date = 2025-05-20
+date = 2025-05-19
 [extra]
-tags=["rust","bevy","mobile"] 
+tags=["rust","bevy","mobile"]
 custom_summary = "Deep-Linking unlocked on iOS with Bevy"
-hidden=true
 +++
 
-Until very recently Bevy iOS apps had a hard time reading deep linking information. Bevy uses [winit](https://github.com/rust-windowing/winit) by default for its platform integrations like window lifecycle management. On iOS winit used to implement and register its own `AppDelegate` to receive app life cycle hooks/calls. 
+Until very recently Bevy iOS apps had a hard time reading deep linking information. Bevy uses [winit](https://github.com/rust-windowing/winit) by default for its platform integrations like window lifecycle management. On iOS winit used to implement and register its own `AppDelegate` to receive app life cycle hooks/calls.
 
 Users of Bevy therefore had only one inconvenient option to receive these hooks: Ditch winit and roll this themselves.
 
@@ -81,7 +80,7 @@ pub fn plugin(app: &mut App) {
 This is of course very application dependant. Here are a few example of what to do:
 
 | Link action | App behaviour |
-| --- | --- | 
+| --- | --- |
 | game user profile link | App opens the user profile of the user that created the link |
 | a player's new record game run | The app shows this player's replay after clicking their link |
 | file sharing  | A `ShareExtension` receives a file that it wants to share with your app and opens your app using a URL schema and the app can identify what file to open using the deep linking context |

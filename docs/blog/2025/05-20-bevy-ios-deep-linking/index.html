@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>rustunit</title>
+    <meta name="description" content="Rustunit offers software development consulting with a focus on rust, game-development and large scale distributed backend services.">
+
+    <link rel="stylesheet" href="https://rustunit.com/fonts.css">
+    <link rel="stylesheet" href="https://rustunit.com/style.css">
+
+    <script src="https://cdn.usefathom.com/script.js" data-site="TSUIPVAW" defer></script>
+</head>
+
+<body>
+    <header>
+        <a href="https://rustunit.com/">HOME</a>
+        <a href="https://rustunit.com/#games">GAMES</a>
+        <a href="https://rustunit.com/blog/">BLOG</a>
+        <a href="https://rustunit.com/contact/">CONTACT</a>
+    </header>
+    
+<div id="blogpage">
+    <div class="date">2025-05-20</div>
+    
+    <div class="hidden">hidden</div>
+    
+    <h1 class="title">
+        iOS Deep-Linking with Bevy
+    </h1>
+    <div class="content">
+        <p>Until very recently Bevy iOS apps had a hard time reading deep linking information. Bevy uses <a href="https://github.com/rust-windowing/winit">winit</a> by default for its platform integrations like window lifecycle management. On iOS winit used to implement and register its own <code>AppDelegate</code> to receive app life cycle hooks/calls.</p>
+<p>Users of Bevy therefore had only one inconvenient options to receive these hooks: Ditch winit and roll this themselves.</p>
+<p>As of <code>winit 0.30.10</code> (<a href="https://github.com/rust-windowing/winit/releases/tag/v0.30.10">see release</a>) we can now do much better.</p>
+<h1 id="what-is-the-use-case">What is the use case?</h1>
+<p>"Deep linking" means that a link leads to our app being opened or foregrounded and the app knowing <em>that</em> and <em>what</em> url triggered it. The iOS jargon for this is <a href="https://developer.apple.com/documentation/xcode/defining-a-custom-url-scheme-for-your-app">URL Scheme</a>. Some example use cases for this are:</p>
+<ul>
+<li>Sharing specific content inside the app (imagine a user sharing their game profile with a friend)</li>
+<li>File-Sharing (more on that later)</li>
+<li>Advertisement attribution tracking (not covered here)</li>
+</ul>
+<blockquote>
+<p>You might wonder why this is relevant for File-Sharing on iOS. It turns out that the code that triggers your app to open after sharing a file with it is actually just using such a URL scheme to do that.</p>
+</blockquote>
+<h1 id="high-level-steps">High level steps</h1>
+<ol>
+<li>Configure your url schema in xcode</li>
+<li>Add a handler for the <code>application:(_:open:options:)</code> call. (<a href="https://developer.apple.com/documentation/UIKit/UIApplicationDelegate/application(_:open:options:)">see docs</a>)</li>
+<li>Handle deep link properly</li>
+</ol>
+<h2 id="configure-your-url-schema">Configure your url schema</h2>
+<p>For iOS to open your app on a click on a specifically crafted URL we have to adapt our <code>Info.plist</code> file like so:</p>
+<pre data-lang="xml" style="background-color:#212121;color:#eeffff;" class="language-xml "><code class="language-xml" data-lang="xml"><span>...
+</span><span style="color:#89ddff;">&lt;</span><span style="color:#f07178;">key</span><span style="color:#89ddff;">&gt;</span><span>CFBundleURLTypes</span><span style="color:#89ddff;">&lt;/</span><span style="color:#f07178;">key</span><span style="color:#89ddff;">&gt;
+</span><span style="color:#89ddff;">&lt;</span><span style="color:#f07178;">array</span><span style="color:#89ddff;">&gt;
+</span><span>  </span><span style="color:#89ddff;">&lt;</span><span style="color:#f07178;">dict</span><span style="color:#89ddff;">&gt;
+</span><span>    </span><span style="color:#89ddff;">&lt;</span><span style="color:#f07178;">key</span><span style="color:#89ddff;">&gt;</span><span>CFBundleURLName</span><span style="color:#89ddff;">&lt;/</span><span style="color:#f07178;">key</span><span style="color:#89ddff;">&gt;
+</span><span>    </span><span style="color:#89ddff;">&lt;</span><span style="color:#f07178;">string</span><span style="color:#89ddff;">&gt;</span><span>com.rustunit.tinytakeoff</span><span style="color:#89ddff;">&lt;/</span><span style="color:#f07178;">string</span><span style="color:#89ddff;">&gt;
+</span><span>    </span><span style="color:#89ddff;">&lt;</span><span style="color:#f07178;">key</span><span style="color:#89ddff;">&gt;</span><span>CFBundleURLSchemes</span><span style="color:#89ddff;">&lt;/</span><span style="color:#f07178;">key</span><span style="color:#89ddff;">&gt;
+</span><span>    </span><span style="color:#89ddff;">&lt;</span><span style="color:#f07178;">array</span><span style="color:#89ddff;">&gt;
+</span><span>      </span><span style="color:#89ddff;">&lt;</span><span style="color:#f07178;">string</span><span style="color:#89ddff;">&gt;</span><span>tinytakeoff</span><span style="color:#89ddff;">&lt;/</span><span style="color:#f07178;">string</span><span style="color:#89ddff;">&gt;
+</span><span>    </span><span style="color:#89ddff;">&lt;/</span><span style="color:#f07178;">array</span><span style="color:#89ddff;">&gt;
+</span><span>  </span><span style="color:#89ddff;">&lt;/</span><span style="color:#f07178;">dict</span><span style="color:#89ddff;">&gt;
+</span><span style="color:#89ddff;">&lt;/</span><span style="color:#f07178;">array</span><span style="color:#89ddff;">&gt;
+</span></code></pre>
+<p>With this our game <a href="https://tinytakeoff.com">tinytakeoff</a> will be opened when clicking on URL looking this: <code>tinytakeoff://fooobar?param=value</code></p>
+<p>Alternatively you can also make that change via the XCode UI, see the <a href="https://developer.apple.com/documentation/xcode/defining-a-custom-url-scheme-for-your-app#Register-your-URL-scheme">docs to register your URL scheme</a>.</p>
+<p>So far these steps were possible already before and lead to your app being opened or foregrounded based on a click on such a URL.</p>
+<p>What was not possible was step 2 and 3 to actually make use of that information inside your Bevy app.</p>
+<h2 id="receive-app-open-options">Receive app open options</h2>
+<p>Thanks to the <a href="https://github.com/madsmtm/objc2">objc2</a> crate we can use native objc APIs without having to write objc but pure rust instead. The underlying code looks like magic and uses a bunch of macros to accomplish this. The result is that we can abstract this away into a conventient rust only crate: <a href="https://github.com/rustunit/bevy_ios_app_delegate">bevy_ios_app_delegate</a>.</p>
+<p>Using this crate hooking into this open url life cycle call of the <code>AppDelegate</code> becomes as easy as this snippet of bevy setup code:</p>
+<pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#c792ea;">pub </span><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">plugin</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">app</span><span style="color:#89ddff;">: &amp;</span><span style="color:#c792ea;">mut</span><span> App</span><span style="color:#89ddff;">) {
+</span><span>  </span><span style="font-style:italic;color:#4a4a4a;">// bevy setup skipped here...
+</span><span>
+</span><span>  </span><span style="font-style:italic;color:#4a4a4a;">// register our crates plugin (this is a noop on non ios platforms)
+</span><span>  app</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">add_plugins</span><span style="color:#89ddff;">(</span><span>IosAppDelegatePlugin</span><span style="color:#89ddff;">);
+</span><span>
+</span><span>  </span><span style="font-style:italic;color:#4a4a4a;">// register observer that triggers if open url app delegate was called (either by app opening or forgrounding after a click on a URL scheme)
+</span><span>  app</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">add_observer</span><span style="color:#89ddff;">(|</span><span style="color:#f78c6c;">trigger</span><span style="color:#89ddff;">: </span><span>Trigger</span><span style="color:#89ddff;">&lt;</span><span>AppDelegateCall</span><span style="color:#89ddff;">&gt;| {
+</span><span>    info!</span><span style="color:#89ddff;">(&quot;</span><span style="color:#c3e88d;">app delegate call: {:?}</span><span style="color:#89ddff;">&quot;,</span><span> trigger</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">event</span><span style="color:#89ddff;">());
+</span><span>  </span><span style="color:#89ddff;">});
+</span><span style="color:#89ddff;">}
+</span></code></pre>
+<h2 id="handle-deep-link">Handle deep link</h2>
+<p>This is of course very application dependant. Here are a few example of what to do:</p>
+<table><thead><tr><th>Link action</th><th>App behaviour</th></tr></thead><tbody>
+<tr><td>game user profile link</td><td>App opens the user profile of the user that created the link</td></tr>
+<tr><td>a players new record game run</td><td>The app shows this players replay after clicking their link</td></tr>
+<tr><td>file sharing</td><td>A <code>ShareExtension</code> receives a file that it wants to share with your app and opens your app using a URL schema and the app can identify what file to open using the deep linking context</td></tr>
+</tbody></table>
+<h1 id="further-steps">Further steps</h1>
+<p><strong>universal links</strong></p>
+<p>Aside from the custom URL schema we described above a regular web domain can be associated with your app and trigger opening it, this is called <em>universal linking</em> (<a href="https://developer.apple.com/documentation/xcode/supporting-universal-links-in-your-app">see apple docs</a>) and requires yet another <code>AppDelegate</code> <a href="https://developer.apple.com/documentation/appkit/nsapplicationdelegate/application(_:continue:restorationhandler:)">call implementation</a>.</p>
+<p><strong>push notification token</strong></p>
+<p>Being able to make a custom <code>AppDelegate</code> implementation has more advantage than just for deep linking. We can now vastly simplify also the way we currently receive a push notification token in the <a href="https://github.com/rustunit/bevy_ios_notifications">bevy_ios_notifications</a> crate. Receiving this token also happens via <code>AppDelegate</code> call and will be provided via the new <code>bevy_ios_app_delegate</code> crate soon.</p>
+<p>Exciting times to build iOS apps using Bevy.</p>
+<hr />
+<p>Do you need support building your Bevy or Rust project? Our team of experts can support you! <a href="https://rustunit.com/contact/">Contact us.</a></p>
+
+    </div>
+</div>
+
+    <footer>
+        
+        <div class="links">
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.linkedin.com&#x2F;company&#x2F;rustunit&#x2F;" title="LinkedIn">
+                <img alt="LinkedIn" class="icon" src="https://rustunit.com/icons/linkedin.svg" />
+            </a>
+            
+            <a rel="me" href="&#x2F;contact" title="Contact">
+                <img alt="Contact" class="icon" src="https://rustunit.com/icons/mail.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;github.com&#x2F;rustunit" title="GitHub">
+                <img alt="GitHub" class="icon" src="https://rustunit.com/icons/github.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.youtube.com&#x2F;@rustunit_com" title="YouTube">
+                <img alt="YouTube" class="icon" src="https://rustunit.com/icons/youtube.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;mastodon.social&#x2F;@rustunit" title="Mastodon">
+                <img alt="Mastodon" class="icon" src="https://rustunit.com/icons/mastodon.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;bsky.app&#x2F;profile&#x2F;rustunit.com" title="Bsky">
+                <img alt="Bsky" class="icon" src="https://rustunit.com/icons/bsky.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;discord.gg&#x2F;MHzmYHnnsE" title="Discord">
+                <img alt="Discord" class="icon" src="https://rustunit.com/icons/discord.svg" />
+            </a>
+            
+        </div>
+        
+
+        <div>Copyright © 2025 Rustunit B.V.</div>
+    </footer>
+</body>
+
+</html>

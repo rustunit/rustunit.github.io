@@ -1,6 +1,6 @@
 +++
 title = "iOS Deep-Linking with Bevy"
-date = 2025-05-19
+date = 2025-05-18
 [extra]
 tags=["rust","bevy","mobile"]
 custom_summary = "Deep-Linking unlocked on iOS with Bevy"

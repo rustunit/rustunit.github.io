@@ -9,7 +9,7 @@ hidden=true
 
 Until very recently Bevy iOS apps had a hard time reading deep linking information. Bevy uses [winit](https://github.com/rust-windowing/winit) by default for its platform integrations like window lifecycle management. On iOS winit used to implement and register its own `AppDelegate` to receive app life cycle hooks/calls. 
 
-Users of Bevy therefore had only one inconvenient options to receive these hooks: Ditch winit and roll this themselves.
+Users of Bevy therefore had only one inconvenient option to receive these hooks: Ditch winit and roll this themselves.
 
 As of `winit 0.30.10` ([see release](https://github.com/rust-windowing/winit/releases/tag/v0.30.10)) we can now do much better.
 
@@ -69,7 +69,7 @@ pub fn plugin(app: &mut App) {
   // register our crates plugin (this is a noop on non ios platforms)
   app.add_plugins(IosAppDelegatePlugin);
 
-  // register observer that triggers if open url app delegate was called (either by app opening or forgrounding after a click on a URL scheme)
+  // register observer that triggers if open url app delegate was called (either by app opening or foregrounding after a click on a URL scheme)
   app.add_observer(|trigger: Trigger<AppDelegateCall>| {
     info!("app delegate call: {:?}", trigger.event());
   });
@@ -83,14 +83,14 @@ This is of course very application dependant. Here are a few example of what to 
 | Link action | App behaviour |
 | --- | --- | 
 | game user profile link | App opens the user profile of the user that created the link |
-| a players new record game run | The app shows this players replay after clicking their link |
+| a player's new record game run | The app shows this player's replay after clicking their link |
 | file sharing  | A `ShareExtension` receives a file that it wants to share with your app and opens your app using a URL schema and the app can identify what file to open using the deep linking context |
 
 # Further steps
 
 **universal links**
 
-Aside from the custom URL schema we described above a regular web domain can be associated with your app and trigger opening it, this is called *universal linking* ([see apple docs](https://developer.apple.com/documentation/xcode/supporting-universal-links-in-your-app)) and requires yet another `AppDelegate` [call implementation](https://developer.apple.com/documentation/appkit/nsapplicationdelegate/application(_:continue:restorationhandler:)).
+Aside from the custom URL schema we described above, a regular web domain can be associated with your app and trigger opening it, this is called *universal linking* ([see apple docs](https://developer.apple.com/documentation/xcode/supporting-universal-links-in-your-app)) and requires yet another `AppDelegate` [call implementation](https://developer.apple.com/documentation/appkit/nsapplicationdelegate/application(_:continue:restorationhandler:)).
 
 **push notification token**
 

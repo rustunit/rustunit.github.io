@@ -32,7 +32,7 @@
     </h1>
     <div class="content">
         <p>Until very recently Bevy iOS apps had a hard time reading deep linking information. Bevy uses <a href="https://github.com/rust-windowing/winit">winit</a> by default for its platform integrations like window lifecycle management. On iOS winit used to implement and register its own <code>AppDelegate</code> to receive app life cycle hooks/calls.</p>
-<p>Users of Bevy therefore had only one inconvenient options to receive these hooks: Ditch winit and roll this themselves.</p>
+<p>Users of Bevy therefore had only one inconvenient option to receive these hooks: Ditch winit and roll this themselves.</p>
 <p>As of <code>winit 0.30.10</code> (<a href="https://github.com/rust-windowing/winit/releases/tag/v0.30.10">see release</a>) we can now do much better.</p>
 <h1 id="what-is-the-use-case">What is the use case?</h1>
 <p>"Deep linking" means that a link leads to our app being opened or foregrounded and the app knowing <em>that</em> and <em>what</em> url triggered it. The iOS jargon for this is <a href="https://developer.apple.com/documentation/xcode/defining-a-custom-url-scheme-for-your-app">URL Scheme</a>. Some example use cases for this are:</p>
@@ -78,7 +78,7 @@
 </span><span>  </span><span style="font-style:italic;color:#4a4a4a;">// register our crates plugin (this is a noop on non ios platforms)
 </span><span>  app</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">add_plugins</span><span style="color:#89ddff;">(</span><span>IosAppDelegatePlugin</span><span style="color:#89ddff;">);
 </span><span>
-</span><span>  </span><span style="font-style:italic;color:#4a4a4a;">// register observer that triggers if open url app delegate was called (either by app opening or forgrounding after a click on a URL scheme)
+</span><span>  </span><span style="font-style:italic;color:#4a4a4a;">// register observer that triggers if open url app delegate was called (either by app opening or foregrounding after a click on a URL scheme)
 </span><span>  app</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">add_observer</span><span style="color:#89ddff;">(|</span><span style="color:#f78c6c;">trigger</span><span style="color:#89ddff;">: </span><span>Trigger</span><span style="color:#89ddff;">&lt;</span><span>AppDelegateCall</span><span style="color:#89ddff;">&gt;| {
 </span><span>    info!</span><span style="color:#89ddff;">(&quot;</span><span style="color:#c3e88d;">app delegate call: {:?}</span><span style="color:#89ddff;">&quot;,</span><span> trigger</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">event</span><span style="color:#89ddff;">());
 </span><span>  </span><span style="color:#89ddff;">});
@@ -88,12 +88,12 @@
 <p>This is of course very application dependant. Here are a few example of what to do:</p>
 <table><thead><tr><th>Link action</th><th>App behaviour</th></tr></thead><tbody>
 <tr><td>game user profile link</td><td>App opens the user profile of the user that created the link</td></tr>
-<tr><td>a players new record game run</td><td>The app shows this players replay after clicking their link</td></tr>
+<tr><td>a player's new record game run</td><td>The app shows this player's replay after clicking their link</td></tr>
 <tr><td>file sharing</td><td>A <code>ShareExtension</code> receives a file that it wants to share with your app and opens your app using a URL schema and the app can identify what file to open using the deep linking context</td></tr>
 </tbody></table>
 <h1 id="further-steps">Further steps</h1>
 <p><strong>universal links</strong></p>
-<p>Aside from the custom URL schema we described above a regular web domain can be associated with your app and trigger opening it, this is called <em>universal linking</em> (<a href="https://developer.apple.com/documentation/xcode/supporting-universal-links-in-your-app">see apple docs</a>) and requires yet another <code>AppDelegate</code> <a href="https://developer.apple.com/documentation/appkit/nsapplicationdelegate/application(_:continue:restorationhandler:)">call implementation</a>.</p>
+<p>Aside from the custom URL schema we described above, a regular web domain can be associated with your app and trigger opening it, this is called <em>universal linking</em> (<a href="https://developer.apple.com/documentation/xcode/supporting-universal-links-in-your-app">see apple docs</a>) and requires yet another <code>AppDelegate</code> <a href="https://developer.apple.com/documentation/appkit/nsapplicationdelegate/application(_:continue:restorationhandler:)">call implementation</a>.</p>
 <p><strong>push notification token</strong></p>
 <p>Being able to make a custom <code>AppDelegate</code> implementation has more advantage than just for deep linking. We can now vastly simplify also the way we currently receive a push notification token in the <a href="https://github.com/rustunit/bevy_ios_notifications">bevy_ios_notifications</a> crate. Receiving this token also happens via <code>AppDelegate</code> call and will be provided via the new <code>bevy_ios_app_delegate</code> crate soon.</p>
 <p>Exciting times to build iOS apps using Bevy.</p>

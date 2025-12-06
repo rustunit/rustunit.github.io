@@ -121,6 +121,57 @@ main {
     }
 }
 
+.projects {
+    margin-top: 25px;
+    text-align: center;
+
+    p {
+        font-size: x-large;
+        margin-top: 40px;
+        margin-bottom: 40px;
+    }
+
+    .row {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        row-gap: 20px;
+
+        .project {
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            max-width: 400px;
+            width: 100%;
+
+            .project-info {
+                flex: 1;
+                text-align: left;
+
+                .project-name {
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                    margin-bottom: 8px;
+                }
+
+                .project-description {
+                    font-size: 0.9rem;
+                    line-height: 1.5;
+                    opacity: 0.85;
+                }
+            }
+
+            .project-logo {
+                width: 80px;
+                height: 80px;
+                flex-shrink: 0;
+                object-fit: contain;
+            }
+        }
+    }
+}
+
 .clients {
     margin-top: 25px;
     text-align: center;

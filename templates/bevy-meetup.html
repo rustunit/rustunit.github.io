@@ -9,7 +9,7 @@
         <h2>{{ meetup.title }} <span class="meetup-date">{{ meetup.date }}</span></h2>
         <div class="videos">
             {% for video in meetup.videos %}
-            <a href="https://www.youtube.com/watch?v={{ video.youtube_id }}" class="video" target="_blank" rel="noopener">
+            <a href="https://www.youtube.com/watch?v={{ video.youtube_id }}&list={{ meetup.playlist }}" class="video" target="_blank" rel="noopener">
                 <img
                     src="{{ get_url(path='meetup/speakers/' ~ video.avatar) }}"
                     alt="{{ video.speaker }}"

@@ -4,8 +4,32 @@ template = "bevy-meetup.html"
 [extra]
 
 [[extra.meetups]]
+title = "Bevy Meetup #4"
+date = "2024-04-29"
+playlist = "PLbvvWoCXmXkL4XreEHMBq7ZqZRmiRjB35"
+
+[[extra.meetups.videos]]
+title = "Catching rendering regressions on all platforms"
+speaker = "François Mockers"
+youtube_id = "BwZGbZQdpec"
+avatar = "francois.png"
+
+[[extra.meetups.videos]]
+title = "Catching rendering regressions on all platforms"
+speaker = "Lorenz"
+youtube_id = "MIst5jOntWo"
+avatar = "lorenz.png"
+
+[[extra.meetups.videos]]
+title = "Recreating Townscaper using Rust & Bevy"
+speaker = "Jos"
+youtube_id = "8pXdZSpimLw"
+avatar = "jos.png"
+
+[[extra.meetups]]
 title = "Bevy Meetup #3"
 date = "2024-04-29"
+playlist = "PLbvvWoCXmXkIEWjnriIIj9SYC4tuhluW5"
 
 [[extra.meetups.videos]]
 title = "Learnings from a Bevy Game Template"
@@ -22,6 +46,7 @@ avatar = "julian.png"
 [[extra.meetups]]
 title = "Bevy Meetup #2"
 date = "2024-03-19"
+playlist = "PLbvvWoCXmXkJRb8fPcVV1hAhaZHaGC56v"
 
 [[extra.meetups.videos]]
 title = "Sudoku-Pi: A mobile game case-study"
@@ -44,6 +69,7 @@ avatar = "tamas.png"
 [[extra.meetups]]
 title = "Bevy Meetup #1"
 date = "2024-01-30"
+playlist = "PLbvvWoCXmXkJHyozyLtWo83Y9B-6qqs0B"
 
 [[extra.meetups.videos]]
 title = "What the f*** is reflection?"

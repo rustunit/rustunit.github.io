@@ -114,6 +114,35 @@
         }
     }
 
+    .speaker-cta {
+        text-align: center;
+        margin-top: 20px;
+        padding: 30px 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        max-width: 900px;
+        width: 100%;
+
+        p {
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+
+        a {
+            display: inline-block;
+            background: #5865F2;
+            color: white;
+            text-decoration: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+
+            &:hover {
+                background: #4752C4;
+            }
+        }
+    }
+
     @media screen and (max-width: $break-large) {
         padding: 0 20px;
 

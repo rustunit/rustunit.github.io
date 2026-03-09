@@ -3,10 +3,45 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    position: relative;
+
+    .corner-ribbon {
+        position: fixed;
+        top: 18px;
+        left: -34px;
+        width: 130px;
+        padding: 4px 0;
+        background: #ED1C40;
+        color: white;
+        text-align: center;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        transform: rotate(-45deg);
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+
+        &:hover {
+            background: #d4183a;
+        }
+    }
 
     h1 {
         font-size: 36pt;
         text-align: center;
+        margin-bottom: 0;
+    }
+
+    .meetup-cta {
+        font-size: 14px;
+        opacity: 0.8;
+        margin-top: 8px;
+        margin-bottom: 40px;
+
+        a {
+            text-decoration: underline;
+        }
     }
 
     .meetup {

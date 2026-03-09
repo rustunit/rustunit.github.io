@@ -2,7 +2,9 @@
 
 {% block content %}
 <div id="bevy-meetup">
+    <a href="https://www.meetup.com/bevy-game-development/" target="_blank" rel="noopener" class="corner-ribbon">meetup</a>
     <h1>Bevy Meetup</h1>
+    <p class="meetup-cta">Join us for the next one! <a href="https://www.meetup.com/bevy-game-development/" target="_blank" rel="noopener">RSVP on Meetup</a></p>
 
     {% for meetup in section.extra.meetups %}
     <div class="meetup" id="{{ meetup.title | slugify }}">

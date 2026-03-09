@@ -9,6 +9,7 @@ highlight_code = true
 highlight_theme = "material-dark"
 
 [extra]
+year = 2026
 links = [
     # { title = "Rotterdam, NL", url = "https://maps.app.goo.gl/vYh2kSC4BPaJymXDA", icon = "location-dot" },
     { title = "LinkedIn", url = "https://www.linkedin.com/company/rustunit/", icon = "linkedin" },

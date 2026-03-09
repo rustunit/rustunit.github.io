@@ -1,0 +1,93 @@
+#bevy-meetup {
+    margin-top: 45px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    h1 {
+        font-size: 36pt;
+        text-align: center;
+    }
+
+    .meetup {
+        max-width: 900px;
+        width: 100%;
+        margin-bottom: 40px;
+
+        h2 {
+            font-size: 20pt;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 10px;
+
+            a {
+                text-decoration: none;
+                color: inherit;
+
+                &:hover {
+                    text-decoration: underline;
+                }
+            }
+
+            .meetup-date {
+                font-size: 12pt;
+                opacity: 0.6;
+                font-weight: normal;
+                margin-left: 10px;
+                white-space: nowrap;
+            }
+        }
+
+        .videos {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+
+            .video {
+                text-decoration: none;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                width: calc(50% - 8px);
+
+                &:hover .video-title {
+                    text-decoration: underline;
+                }
+
+                .speaker-avatar {
+                    width: 56px;
+                    height: 56px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    flex-shrink: 0;
+                }
+
+                .video-info {
+                    .video-title {
+                        font-size: 15px;
+                        font-weight: 600;
+                        line-height: 1.3;
+                    }
+
+                    .video-speaker {
+                        font-size: 13px;
+                        opacity: 0.7;
+                        margin-top: 4px;
+                    }
+                }
+            }
+        }
+    }
+
+    @media screen and (max-width: $break-large) {
+        padding: 0 20px;
+
+        h1 {
+            font-size: 24pt;
+        }
+
+        .meetup .videos .video {
+            width: 100%;
+        }
+    }
+}

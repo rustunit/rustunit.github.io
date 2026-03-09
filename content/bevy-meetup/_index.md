@@ -4,8 +4,162 @@ template = "bevy-meetup.html"
 [extra]
 
 [[extra.meetups]]
+title = "Bevy Meetup #12"
+date = "2026-01-29"
+playlist = "PLbvvWoCXmXkKfEIlZyD7vYyBoR4JnowiT"
+
+[[extra.meetups.videos]]
+title = "Dependency Injection in Bevy"
+speaker = "PROMETHIA"
+youtube_id = "Ji7Uxi5xCAw"
+avatar = "promethia.png"
+
+[[extra.meetups.videos]]
+title = "Netcode in lightyear"
+speaker = "Periwink"
+youtube_id = "eleR8yvZDxk"
+avatar = "periwink.png"
+
+[[extra.meetups]]
+title = "Bevy Meetup #11"
+date = "2025-07-03"
+playlist = "PLbvvWoCXmXkIQgt14jQ0XcnFcP5JDGdU_"
+
+[[extra.meetups.videos]]
+title = "Bevy in Production: Building Modeling at Metabuild"
+speaker = "Alix"
+youtube_id = "16r9plbAhXo"
+avatar = "alix.png"
+
+[[extra.meetups.videos]]
+title = "How I Make 3D Games"
+speaker = "Jan"
+youtube_id = "hAWv6AJ8M-Y"
+avatar = "jan.png"
+
+[[extra.meetups]]
+title = "Bevy Meetup #10"
+date = "2025-05-07"
+playlist = "PLbvvWoCXmXkKpVAxqwJHwL9iXj-khDSgc"
+
+[[extra.meetups.videos]]
+title = "Rapid Team Transition to a Bevy-Based Engine"
+speaker = "JP"
+youtube_id = "cKSTCA-rc0Y"
+avatar = "jp.png"
+
+[[extra.meetups.videos]]
+title = "From zero to demo: a newcomer's experience learning Bevy"
+speaker = "Tristan"
+youtube_id = "_FIDuLV0ZsA"
+avatar = "tristan.png"
+
+[[extra.meetups]]
+title = "Bevy Meetup #9"
+date = "2025-03-06"
+playlist = "PLbvvWoCXmXkJ0IsXZmpaCu-kXHTCjiayE"
+
+[[extra.meetups.videos]]
+title = "Networking in Bevy with ECS replication"
+speaker = "Hennadii"
+youtube_id = "aDsVFmXD2cc"
+avatar = "hennadii.png"
+
+[[extra.meetups.videos]]
+title = "Intermediate Representations for Reactive Structures"
+speaker = "Pete"
+youtube_id = "JeXOajFv8Dk"
+avatar = "pete.png"
+
+[[extra.meetups]]
+title = "Bevy Meetup #8"
+date = "2025-01-22"
+playlist = "PLbvvWoCXmXkLM8JUlDL0FVOU6eLAVsMwd"
+
+[[extra.meetups.videos]]
+title = "Counter-Strike analytics with Bevy and React"
+speaker = "Kristoffer"
+youtube_id = "6b3qTeIl2Ak"
+avatar = "kristoffer.png"
+
+[[extra.meetups.videos]]
+title = "Porting Crystal Realms to Android with Bevy"
+speaker = "Marco"
+youtube_id = "4EE_bhHZZA4"
+avatar = "marco.png"
+
+[[extra.meetups.videos]]
+title = "From 'pfui' to bevy_hui - make Bevy UI great"
+speaker = "Lorenz"
+youtube_id = "1q6bN8CNlhA"
+avatar = "lorenz.png"
+
+[[extra.meetups]]
+title = "Bevy Meetup #7"
+date = "2024-11-21"
+playlist = "PLbvvWoCXmXkI0fHvjVy-B31ZmBfklE9xD"
+
+[[extra.meetups.videos]]
+title = "Consoles and Beyond: Making Bevy no_std compatible"
+speaker = "Zac"
+youtube_id = "RbpAgaqYxrU"
+avatar = "zac.png"
+
+[[extra.meetups.videos]]
+title = "Proving compilers aren't hard with Bevy Linter"
+speaker = "Bryan"
+youtube_id = "BRQJBlWBTms"
+avatar = "bryan.png"
+
+[[extra.meetups.videos]]
+title = "In search of Bevy UI escape velocity"
+speaker = "Koe"
+youtube_id = "tDyTbAKfgWM"
+avatar = "koe.png"
+
+[[extra.meetups]]
+title = "Bevy Meetup #6"
+date = "2024-09-12"
+playlist = "PLbvvWoCXmXkKH84QtnBbBXci3XucdIUGm"
+
+[[extra.meetups.videos]]
+title = "From Bevy to Bones: Accidentally Making a Game Engine"
+speaker = "Zicklag"
+youtube_id = "7tvAg4gntmE"
+avatar = "zicklag.png"
+
+[[extra.meetups.videos]]
+title = "Future-proofing techniques applied to Rapier"
+speaker = "Thierry Berger"
+youtube_id = "7mS7waxkrlE"
+avatar = "thierry.png"
+
+[[extra.meetups.videos]]
+title = "The Road To Advanced Spatial Audio with Bevy"
+speaker = "Jillis"
+youtube_id = "XyrOl6cbdpI"
+avatar = "jillis.png"
+
+[[extra.meetups]]
+title = "Bevy Meetup #5"
+date = "2024-07-18"
+playlist = "PLbvvWoCXmXkLFbe2HMVEdtY3ntBB4U_lm"
+
+[[extra.meetups.videos]]
+title = "Truck Instrument Cluster powered by Bevy"
+speaker = "Florian Bartels"
+youtube_id = "_xQMTIWmuig"
+avatar = "florian.png"
+
+[[extra.meetups.videos]]
+title = "Compute-centric vector graphics using bevy_vello"
+speaker = "Spencer C. Imbleau"
+youtube_id = "VQGQhotekvY"
+avatar = "spencer.png"
+
+[[extra.meetups]]
 title = "Bevy Meetup #4"
-date = "2024-04-29"
+date = "2024-06-04"
 playlist = "PLbvvWoCXmXkL4XreEHMBq7ZqZRmiRjB35"
 
 [[extra.meetups.videos]]
@@ -15,7 +169,7 @@ youtube_id = "BwZGbZQdpec"
 avatar = "francois.png"
 
 [[extra.meetups.videos]]
-title = "Catching rendering regressions on all platforms"
+title = "Hooking into the Bevy Rendering Pipeline"
 speaker = "Lorenz"
 youtube_id = "MIst5jOntWo"
 avatar = "lorenz.png"

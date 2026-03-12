@@ -238,5 +238,14 @@
         .video-full {
             width: 100%;
         }
+
+        .meetup-nav {
+            flex-direction: column;
+            gap: 12px;
+
+            > div {
+                text-align: center !important;
+            }
+        }
     }
 }

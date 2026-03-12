@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="bevy-meetup">
+    <a href="https://www.meetup.com/bevy-game-development/" target="_blank" rel="noopener" class="corner-ribbon">meetup</a>
+    <h1>{{ page.title }}</h1>
+    <p class="meetup-cta">{{ page.extra.date }} · <a href="https://www.youtube.com/playlist?list={{ page.extra.playlist }}">Full Playlist</a></p>
+
+    <div class="meetup">
+        <div class="videos">
+            {% for video in page.extra.videos %}
+            <div class="video-full" id="{{ video.speaker | slugify }}">
+                <div class="video-embed">
+                    <iframe
+                        src="https://www.youtube.com/embed/{{ video.youtube_id }}?list={{ page.extra.playlist }}"
+                        title="{{ video.title }}"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen
+                        loading="lazy"
+                    ></iframe>
+                </div>
+                <div class="video-detail">
+                    <img
+                        src="{{ get_url(path='meetup/speakers/' ~ video.avatar) }}"
+                        alt="{{ video.speaker }}"
+                        class="speaker-avatar"
+                        loading="lazy"
+                    />
+                    <div class="video-info">
+                        <div class="video-title">{{ video.title }}</div>
+                        <div class="video-speaker">{{ video.speaker }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="speaker-cta">
+        <p>Want to share your Bevy project or knowledge? We are always looking for speakers!</p>
+        <a href="https://discord.gg/MHzmYHnnsE" target="_blank" rel="noopener">Reach out on Discord</a>
+    </div>
+
+    <div class="back-link">
+        <a href="{{ get_url(path='@/bevy-meetup/_index.md') }}">← All Meetups</a>
+    </div>
+</div>
+{% endblock content %}

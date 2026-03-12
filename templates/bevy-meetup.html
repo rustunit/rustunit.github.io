@@ -6,12 +6,13 @@
     <h1>Bevy Meetup</h1>
     <p class="meetup-cta">Join us for the next one! <a href="https://www.meetup.com/bevy-game-development/" target="_blank" rel="noopener">RSVP on Meetup</a></p>
 
-    {% for meetup in section.extra.meetups %}
-    <div class="meetup" id="{{ meetup.title | slugify }}">
-        <h2><a href="#{{ meetup.title | slugify }}">{{ meetup.title }}</a> <span class="meetup-date">{{ meetup.date }}</span></h2>
+    {% set pages = section.pages | sort(attribute="date") | reverse %}
+    {% for page in pages %}
+    <div class="meetup" id="{{ page.title | slugify }}">
+        <h2><a href="{{ page.permalink }}">{{ page.title }}</a> <span class="meetup-date">{{ page.extra.date }}</span></h2>
         <div class="videos">
-            {% for video in meetup.videos %}
-            <a href="https://www.youtube.com/watch?v={{ video.youtube_id }}&list={{ meetup.playlist }}" class="video" target="_blank" rel="noopener">
+            {% for video in page.extra.videos %}
+            <a href="{{ page.permalink }}#{{ video.speaker | slugify }}" class="video">
                 <img
                     src="{{ get_url(path='meetup/speakers/' ~ video.avatar) }}"
                     alt="{{ video.speaker }}"

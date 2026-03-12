@@ -42,8 +42,20 @@
         <a href="https://discord.gg/MHzmYHnnsE" target="_blank" rel="noopener">Reach out on Discord</a>
     </div>
 
-    <div class="back-link">
-        <a href="{{ get_url(path='@/bevy-meetup/_index.md') }}">← All Meetups</a>
+    <div class="meetup-nav">
+        <div>
+            {% if page.lower %}
+            <a href="{{ page.lower.permalink }}">← {{ page.lower.title }}</a>
+            {% endif %}
+        </div>
+        <div>
+            <a href="{{ get_url(path='@/bevy-meetup/_index.md') }}">All Meetups</a>
+        </div>
+        <div>
+            {% if page.higher %}
+            <a href="{{ page.higher.permalink }}">{{ page.higher.title }} →</a>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock content %}

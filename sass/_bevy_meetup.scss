@@ -193,9 +193,26 @@
         }
     }
 
-    .back-link {
+    .meetup-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 900px;
+        width: 100%;
         margin-top: 20px;
         margin-bottom: 40px;
+
+        > div {
+            flex: 1;
+
+            &:nth-child(2) {
+                text-align: center;
+            }
+
+            &:last-child {
+                text-align: right;
+            }
+        }
 
         a {
             font-size: 14px;

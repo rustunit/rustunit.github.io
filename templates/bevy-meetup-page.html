@@ -10,16 +10,6 @@
         <div class="videos">
             {% for video in page.extra.videos %}
             <div class="video-full" id="{{ video.speaker | slugify }}">
-                <div class="video-embed">
-                    <iframe
-                        src="https://www.youtube.com/embed/{{ video.youtube_id }}?list={{ page.extra.playlist }}"
-                        title="{{ video.title }}"
-                        frameborder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowfullscreen
-                        loading="lazy"
-                    ></iframe>
-                </div>
                 <div class="video-detail">
                     <img
                         src="{{ get_url(path='meetup/speakers/' ~ video.avatar) }}"
@@ -31,6 +21,16 @@
                         <div class="video-title">{{ video.title }}</div>
                         <div class="video-speaker">{{ video.speaker }}</div>
                     </div>
+                </div>
+                <div class="video-embed">
+                    <iframe
+                        src="https://www.youtube.com/embed/{{ video.youtube_id }}?list={{ page.extra.playlist }}"
+                        title="{{ video.title }}"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen
+                        loading="lazy"
+                    ></iframe>
                 </div>
             </div>
             {% endfor %}

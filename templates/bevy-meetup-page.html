@@ -4,6 +4,36 @@
 <div id="bevy-meetup">
     <a href="https://www.meetup.com/bevy-game-development/" target="_blank" rel="noopener" class="corner-ribbon">meetup</a>
     <h1>{{ page.title }}</h1>
+
+    {% if page.extra.upcoming %}
+    <p class="meetup-cta">{{ page.extra.date }} <span class="meetup-badge">Upcoming</span></p>
+
+    <div class="planned-lineup">
+        <h2>Lineup</h2>
+        {% for video in page.extra.videos %}
+        <div class="planned-talk" id="{{ video.speaker | slugify }}">
+            <img
+                src="{{ get_url(path='meetup/speakers/' ~ video.avatar) }}"
+                alt="{{ video.speaker }}"
+                class="speaker-avatar"
+                loading="lazy"
+            />
+            <div>
+                <div class="planned-talk-title">{{ video.title }}</div>
+                <div class="planned-talk-speaker">{{ video.speaker }}</div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="planned-actions">
+            {% if page.extra.youtube %}
+            <a href="{{ page.extra.youtube }}" target="_blank" rel="noopener" class="btn-youtube">Notify me on YouTube</a>
+            {% endif %}
+            <a href="{% if page.extra.meetup %}{{ page.extra.meetup }}{% else %}https://www.meetup.com/bevy-game-development/{% endif %}" target="_blank" rel="noopener" class="btn-rsvp">RSVP on Meetup</a>
+        </div>
+    </div>
+
+    {% else %}
     <p class="meetup-cta">{{ page.extra.date }} · <a href="https://www.youtube.com/playlist?list={{ page.extra.playlist }}">Full Playlist</a></p>
 
     <div class="meetup">
@@ -36,6 +66,7 @@
             {% endfor %}
         </div>
     </div>
+    {% endif %}
 
     <div class="speaker-cta">
         <p>Want to share your Bevy project or knowledge? We are always looking for speakers!</p>

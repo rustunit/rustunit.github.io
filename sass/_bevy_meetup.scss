@@ -33,11 +33,61 @@
         margin-bottom: 0;
     }
 
+    a.meetup-badge {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        background: #ED1C40;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 4px;
+        margin-left: 10px;
+        vertical-align: middle;
+        text-decoration: none !important;
+
+        &:hover {
+            background: #d4183a;
+            color: white;
+        }
+    }
+
+    .meetup-badge {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        background: #ED1C40;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 4px;
+        margin-left: 10px;
+        vertical-align: middle;
+    }
+
+    .meetup-stream {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        margin-left: 10px;
+        background: #FF0000;
+        color: white;
+        padding: 3px 10px;
+        border-radius: 4px;
+        text-decoration: none;
+        vertical-align: middle;
+
+        &:hover {
+            background: #CC0000;
+        }
+    }
+
     .meetup-cta {
         font-size: 14px;
         opacity: 0.8;
         margin-top: 8px;
         margin-bottom: 40px;
+        text-align: center;
 
         a {
             text-decoration: underline;
@@ -71,6 +121,7 @@
                 margin-left: 10px;
                 white-space: nowrap;
             }
+
         }
 
         .videos {
@@ -114,6 +165,87 @@
         }
     }
 
+    .planned-lineup {
+        max-width: 560px;
+        width: 100%;
+
+        h2 {
+            font-size: 14pt;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.5;
+            margin-bottom: 24px;
+        }
+
+        .planned-talk {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+            &:first-of-type {
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .speaker-avatar {
+                width: 64px;
+                height: 64px;
+                border-radius: 50%;
+                object-fit: cover;
+                flex-shrink: 0;
+            }
+
+            .planned-talk-title {
+                font-size: 17px;
+                font-weight: 600;
+                line-height: 1.3;
+            }
+
+            .planned-talk-speaker {
+                font-size: 14px;
+                opacity: 0.7;
+                margin-top: 4px;
+            }
+        }
+
+        .planned-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+            margin-bottom: 40px;
+            justify-content: center;
+
+            a {
+                display: inline-block;
+                padding: 12px 28px;
+                border-radius: 6px;
+                font-weight: 700;
+                font-size: 15px;
+                text-decoration: none;
+            }
+
+            .btn-youtube {
+                background: #FF0000;
+                color: white;
+
+                &:hover {
+                    background: #CC0000;
+                }
+            }
+
+            .btn-rsvp {
+                background: rgba(255, 255, 255, 0.1);
+                color: white;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.15);
+                }
+            }
+        }
+    }
+
     .speaker-cta {
         text-align: center;
         margin-top: 20px;
@@ -139,6 +271,35 @@
 
             &:hover {
                 background: #4752C4;
+            }
+        }
+    }
+
+    .talk {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: calc(50% - 8px);
+
+        .speaker-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .video-info {
+            .video-title {
+                font-size: 15px;
+                font-weight: 600;
+                line-height: 1.3;
+            }
+
+            .video-speaker {
+                font-size: 13px;
+                opacity: 0.7;
+                margin-top: 4px;
             }
         }
     }
@@ -242,6 +403,7 @@
             width: 100%;
         }
 
+        .talk,
         .video-full {
             width: 100%;
         }

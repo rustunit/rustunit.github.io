@@ -11,7 +11,7 @@
     <div class="meetup {% if page.extra.upcoming %}meetup-planned{% endif %}" id="{{ page.title | slugify }}">
         <h2>
             <a href="{{ page.permalink }}">{{ page.title }}</a>
-            <span class="meetup-date">{{ page.extra.date }}{% if page.extra.upcoming %} <a href="{{ page.permalink }}" class="meetup-badge">Upcoming</a>{% endif %}</span>
+            <span class="meetup-date">{{ page.extra.date }}{% if page.extra.upcoming and page.extra.time %} <span data-utc-datetime="{{ page.extra.date }}T{{ page.extra.time }}:00Z"></span>{% endif %}{% if page.extra.upcoming %} <a href="{{ page.permalink }}" class="meetup-badge">Upcoming</a>{% endif %}</span>
         </h2>
         <div class="videos">
             {% for video in page.extra.videos %}
@@ -37,4 +37,12 @@
         <a href="https://discord.gg/MHzmYHnnsE" target="_blank" rel="noopener">Reach out on Discord</a>
     </div>
 </div>
+<script>
+document.querySelectorAll('[data-utc-datetime]').forEach(function(el) {
+    var d = new Date(el.getAttribute('data-utc-datetime'));
+    var time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    var tz = d.toLocaleTimeString([], { timeZoneName: 'short' }).split(' ').pop();
+    el.textContent = '· ' + time + ' ' + tz;
+});
+</script>
 {% endblock content %}

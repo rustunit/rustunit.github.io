@@ -134,6 +134,14 @@
         </div>
     </div>
 </div>
+<script>
+document.querySelectorAll('[data-utc-datetime]').forEach(function(el) {
+    var d = new Date(el.getAttribute('data-utc-datetime'));
+    var time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    var tz = d.toLocaleTimeString([], { timeZoneName: 'short' }).split(' ').pop();
+    el.textContent = '· ' + time + ' ' + tz;
+});
+</script>
 
     <footer>
         

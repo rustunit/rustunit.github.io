@@ -34,7 +34,7 @@
     <div class="meetup meetup-planned" id="bevy-meetup-13">
         <h2>
             <a href="https:&#x2F;&#x2F;rustunit.com&#x2F;bevy-meetup&#x2F;bevy-meetup-13&#x2F;">Bevy Meetup #13</a>
-            <span class="meetup-date">2026-04-23 <a href="https:&#x2F;&#x2F;rustunit.com&#x2F;bevy-meetup&#x2F;bevy-meetup-13&#x2F;" class="meetup-badge">Upcoming</a></span>
+            <span class="meetup-date">2026-04-23 <span data-utc-datetime="2026-04-23T17:00:00Z"></span> <a href="https:&#x2F;&#x2F;rustunit.com&#x2F;bevy-meetup&#x2F;bevy-meetup-13&#x2F;" class="meetup-badge">Upcoming</a></span>
         </h2>
         <div class="videos">
             
@@ -635,6 +635,14 @@
         <a href="https://discord.gg/MHzmYHnnsE" target="_blank" rel="noopener">Reach out on Discord</a>
     </div>
 </div>
+<script>
+document.querySelectorAll('[data-utc-datetime]').forEach(function(el) {
+    var d = new Date(el.getAttribute('data-utc-datetime'));
+    var time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    var tz = d.toLocaleTimeString([], { timeZoneName: 'short' }).split(' ').pop();
+    el.textContent = '· ' + time + ' ' + tz;
+});
+</script>
 
     <footer>
         

@@ -29,7 +29,7 @@
     <h1>Bevy Meetup #13</h1>
 
     
-    <p class="meetup-cta">2026-04-23 <span class="meetup-badge">Upcoming</span></p>
+    <p class="meetup-cta">2026-04-23 <span data-utc-datetime="2026-04-23T17:00:00Z"></span> <span class="meetup-badge">Upcoming</span></p>
 
     <div class="planned-lineup">
         <h2>Lineup</h2>
@@ -103,6 +103,14 @@
         </div>
     </div>
 </div>
+<script>
+document.querySelectorAll('[data-utc-datetime]').forEach(function(el) {
+    var d = new Date(el.getAttribute('data-utc-datetime'));
+    var time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    var tz = d.toLocaleTimeString([], { timeZoneName: 'short' }).split(' ').pop();
+    el.textContent = '· ' + time + ' ' + tz;
+});
+</script>
 
     <footer>
         

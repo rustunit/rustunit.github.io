@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>rustunit</title>
+    <meta name="description" content="Rustunit offers software development consulting with a focus on rust, game-development and large scale distributed backend services.">
+
+    <link rel="stylesheet" href="https://rustunit.com/fonts.css">
+    <link rel="stylesheet" href="https://rustunit.com/style.css">
+
+    <script src="https://cdn.usefathom.com/script.js" data-site="TSUIPVAW" defer></script>
+</head>
+
+<body>
+    <header>
+        <a href="https://rustunit.com/">HOME</a>
+        <a href="https://rustunit.com/#games">GAMES</a>
+        <a href="https://rustunit.com/#projects">PROJECTS</a>
+        <a href="https://rustunit.com/bevy-meetup/" style="white-space:nowrap">BEVY MEETUP</a>
+        <a href="https://rustunit.com/blog/">BLOG</a>
+        <a href="https://rustunit.com/contact/">CONTACT</a>
+    </header>
+    
+<div id="blogpage">
+    <div class="date">2026-03-30</div>
+    
+    <div class="hidden">hidden</div>
+    
+    <h1 class="title">
+        Autoscaling CI for Gitea in Rust
+    </h1>
+    <div class="content">
+        <p>In this short post we introduce <a href="https://github.com/rustunit/gitea-ci-autoscaler">gitea-ci-autoscaler</a>, a small Rust service we built to provision and tear down CI runner nodes for <a href="https://docs.gitea.com/usage/actions/overview">Gitea Actions</a> on demand.</p>
+<p>Let's look at the basic idea behind it and at two Rust patterns that make the implementation pleasant to work with.</p>
+<h1 id="why-we-built-this">Why we built this</h1>
+<p>We use Gitea Actions for CI across our projects. The problem with self-hosted runners on fixed infrastructure is simple: you either pay for idle servers or wait in queues during bursts. Gitea does not offer built-in autoscaling, so runner registration and infrastructure provisioning are entirely up to you.</p>
+<p>So we built something that spins up <a href="https://www.hetzner.com/cloud/">Hetzner Cloud</a> nodes when CI jobs are waiting and tears them down again when they are not.</p>
+<h1 id="how-it-works">How it works</h1>
+<p>The autoscaler runs inside a K3s cluster and polls every 5 seconds. In each iteration it queries Gitea for waiting jobs and registered runners, Hetzner for provisioned servers, and Kubernetes for nodes and runner pods. It then reconciles all of that into one internal view of the managed nodes.</p>
+<p>When jobs are waiting it scales up by creating new Hetzner servers with cloud-init scripts that auto-join the K3s cluster. When nodes sit idle it tears them down in multiple steps:</p>
+<ul>
+<li>deregister the Gitea runner</li>
+<li>drain the Kubernetes node</li>
+<li>delete the Kubernetes node</li>
+<li>delete the Hetzner server</li>
+</ul>
+<p>We only tear down servers near the end of their paid billing hour. Hetzner charges per hour, so deleting a server 10 minutes in would waste 50 minutes you already paid for.</p>
+<p>Here is what this looks like in our Grafana dashboard. You can see two nodes being provisioned, doing work, going idle and eventually being torn down:</p>
+<img src="/blog/2026/03-30-gitea-ci-autoscaler/managed-nodes-graph.png" alt="Grafana dashboard showing managed nodes by state over time" class="centered" style="max-width: 90%"/>
+<h1 id="modeling-the-node-lifecycle">Modeling the node lifecycle</h1>
+<p>Each managed node goes through a small but well-defined lifecycle. A Rust enum is a natural fit for this:</p>
+<pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#c792ea;">pub </span><span style="font-style:italic;color:#c792ea;">enum </span><span>NodeState </span><span style="color:#89ddff;">{
+</span><span>    Provisioning</span><span style="color:#89ddff;">,
+</span><span>    Busy </span><span style="color:#89ddff;">{
+</span><span>        k8s_node_name</span><span style="color:#89ddff;">: </span><span style="color:#ffcb6b;">String</span><span style="color:#89ddff;">,
+</span><span>        gitea_runner_id</span><span style="color:#89ddff;">: </span><span style="font-style:italic;color:#c792ea;">u64</span><span style="color:#89ddff;">,
+</span><span>        gitea_runner_name</span><span style="color:#89ddff;">: </span><span style="color:#ffcb6b;">String</span><span style="color:#89ddff;">,
+</span><span>    </span><span style="color:#89ddff;">},
+</span><span>    Idle </span><span style="color:#89ddff;">{
+</span><span>        k8s_node_name</span><span style="color:#89ddff;">: </span><span style="color:#ffcb6b;">String</span><span style="color:#89ddff;">,
+</span><span>        gitea_runner_id</span><span style="color:#89ddff;">: </span><span style="font-style:italic;color:#c792ea;">u64</span><span style="color:#89ddff;">,
+</span><span>        gitea_runner_name</span><span style="color:#89ddff;">: </span><span style="color:#ffcb6b;">String</span><span style="color:#89ddff;">,
+</span><span>        idle_since</span><span style="color:#89ddff;">: </span><span>DateTime</span><span style="color:#89ddff;">&lt;</span><span>Utc</span><span style="color:#89ddff;">&gt;,
+</span><span>    </span><span style="color:#89ddff;">},
+</span><span>    Deregistering </span><span style="color:#89ddff;">{
+</span><span>        k8s_node_name</span><span style="color:#89ddff;">: </span><span style="color:#ffcb6b;">String</span><span style="color:#89ddff;">,
+</span><span>        gitea_runner_id</span><span style="color:#89ddff;">: </span><span style="font-style:italic;color:#c792ea;">u64</span><span style="color:#89ddff;">,
+</span><span>    </span><span style="color:#89ddff;">},
+</span><span>    Draining </span><span style="color:#89ddff;">{
+</span><span>        k8s_node_name</span><span style="color:#89ddff;">: </span><span style="color:#ffcb6b;">String</span><span style="color:#89ddff;">,
+</span><span>    </span><span style="color:#89ddff;">},
+</span><span>    Removing</span><span style="color:#89ddff;">,
+</span><span style="color:#89ddff;">}
+</span></code></pre>
+<p>Each variant carries exactly the data relevant to that phase. A <code>Provisioning</code> node has no K8s name yet. A <code>Busy</code> node knows its runner. An <code>Idle</code> node tracks <em>when</em> it became idle so we can decide whether it has been sitting long enough to tear down. As teardown progresses each state carries less data because some resources have already been cleaned up.</p>
+<p>The nice thing here is that the compiler prevents you from accidentally accessing a runner ID on a node that has already been deregistered. The data simply is not there anymore.</p>
+<h1 id="testing-without-cloud-resources">Testing without cloud resources</h1>
+<p>The autoscaler talks to three external APIs: Gitea, Hetzner and Kubernetes. We obviously do not want tests hitting real infrastructure, so each API client is defined as a trait:</p>
+<pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#89ddff;">#[</span><span>async_trait</span><span style="color:#89ddff;">]
+</span><span style="color:#c792ea;">pub </span><span style="font-style:italic;color:#c792ea;">trait </span><span>HetznerClient: Send + Sync </span><span style="color:#89ddff;">{
+</span><span>    async </span><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">create_server</span><span style="color:#89ddff;">(&amp;</span><span style="color:#f78c6c;">self</span><span>, </span><span style="color:#f78c6c;">name</span><span style="color:#89ddff;">: &amp;</span><span style="font-style:italic;color:#c792ea;">str</span><span>, </span><span style="color:#f78c6c;">cloud_init</span><span style="color:#89ddff;">: &amp;</span><span style="font-style:italic;color:#c792ea;">str</span><span style="color:#89ddff;">)
+</span><span>        </span><span style="color:#89ddff;">-&gt; </span><span>anyhow</span><span style="color:#89ddff;">::</span><span style="color:#ffcb6b;">Result</span><span style="color:#89ddff;">&lt;</span><span>HetznerServer</span><span style="color:#89ddff;">&gt;;
+</span><span>    async </span><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">list_servers</span><span style="color:#89ddff;">(&amp;</span><span style="color:#f78c6c;">self</span><span style="color:#89ddff;">) -&gt; </span><span>anyhow</span><span style="color:#89ddff;">::</span><span style="color:#ffcb6b;">Result</span><span style="color:#89ddff;">&lt;</span><span style="color:#ffcb6b;">Vec</span><span style="color:#89ddff;">&lt;</span><span>HetznerServer</span><span style="color:#89ddff;">&gt;&gt;;
+</span><span>    async </span><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">delete_server</span><span style="color:#89ddff;">(&amp;</span><span style="color:#f78c6c;">self</span><span>, </span><span style="color:#f78c6c;">server_id</span><span style="color:#89ddff;">: </span><span style="font-style:italic;color:#c792ea;">i64</span><span style="color:#89ddff;">) -&gt; </span><span>anyhow</span><span style="color:#89ddff;">::</span><span style="color:#ffcb6b;">Result</span><span style="color:#89ddff;">&lt;()&gt;;
+</span><span style="color:#89ddff;">}
+</span></code></pre>
+<p><code>GiteaClient</code> and <code>KubeClient</code> follow the same pattern. In production we use HTTP-backed implementations. In tests we swap in mocks that track calls and can simulate failures.</p>
+<p>This lets us validate the full teardown lifecycle without spinning up a single server:</p>
+<pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#89ddff;">#[</span><span>tokio::test</span><span style="color:#89ddff;">]
+</span><span>async </span><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">teardown_order</span><span style="color:#89ddff;">() {
+</span><span>    </span><span style="font-style:italic;color:#c792ea;">let</span><span> mock_gitea </span><span style="color:#89ddff;">= </span><span>MockGiteaClient</span><span style="color:#89ddff;">::</span><span>new</span><span style="color:#89ddff;">();
+</span><span>    </span><span style="font-style:italic;color:#c792ea;">let</span><span> mock_kube </span><span style="color:#89ddff;">= </span><span>MockKubeClient</span><span style="color:#89ddff;">::</span><span>new</span><span style="color:#89ddff;">();
+</span><span>    </span><span style="font-style:italic;color:#c792ea;">let</span><span> mock_hetzner </span><span style="color:#89ddff;">= </span><span>MockHetznerClient</span><span style="color:#89ddff;">::</span><span>new</span><span style="color:#89ddff;">();
+</span><span>    </span><span style="font-style:italic;color:#4a4a4a;">// ... set up an idle node ...
+</span><span>
+</span><span>    </span><span style="font-style:italic;color:#4a4a4a;">// Step 1: deregister the Gitea runner
+</span><span>    mgr</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">teardown_step</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">0</span><span style="color:#89ddff;">, &amp;</span><span>mock_gitea</span><span style="color:#89ddff;">, &amp;</span><span>mock_kube</span><span style="color:#89ddff;">, &amp;</span><span>mock_hetzner</span><span style="color:#89ddff;">, &amp;</span><span>metrics</span><span style="color:#89ddff;">).</span><span>await</span><span style="color:#89ddff;">;
+</span><span>    assert!</span><span style="color:#89ddff;">(</span><span>matches!</span><span style="color:#89ddff;">(</span><span>mgr</span><span style="color:#89ddff;">.</span><span>nodes</span><span style="color:#89ddff;">[</span><span style="color:#f78c6c;">0</span><span style="color:#89ddff;">].</span><span>state</span><span style="color:#89ddff;">, </span><span>NodeState</span><span style="color:#89ddff;">::</span><span>Deregistering </span><span style="color:#89ddff;">{ .. }));
+</span><span>
+</span><span>    </span><span style="font-style:italic;color:#4a4a4a;">// Step 2: drain the K8s node
+</span><span>    mgr</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">teardown_step</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">0</span><span style="color:#89ddff;">, &amp;</span><span>mock_gitea</span><span style="color:#89ddff;">, &amp;</span><span>mock_kube</span><span style="color:#89ddff;">, &amp;</span><span>mock_hetzner</span><span style="color:#89ddff;">, &amp;</span><span>metrics</span><span style="color:#89ddff;">).</span><span>await</span><span style="color:#89ddff;">;
+</span><span>    assert!</span><span style="color:#89ddff;">(</span><span>matches!</span><span style="color:#89ddff;">(</span><span>mgr</span><span style="color:#89ddff;">.</span><span>nodes</span><span style="color:#89ddff;">[</span><span style="color:#f78c6c;">0</span><span style="color:#89ddff;">].</span><span>state</span><span style="color:#89ddff;">, </span><span>NodeState</span><span style="color:#89ddff;">::</span><span>Draining </span><span style="color:#89ddff;">{ .. }));
+</span><span>
+</span><span>    </span><span style="font-style:italic;color:#4a4a4a;">// Step 3: delete K8s node + Hetzner server
+</span><span>    mgr</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">teardown_step</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">0</span><span style="color:#89ddff;">, &amp;</span><span>mock_gitea</span><span style="color:#89ddff;">, &amp;</span><span>mock_kube</span><span style="color:#89ddff;">, &amp;</span><span>mock_hetzner</span><span style="color:#89ddff;">, &amp;</span><span>metrics</span><span style="color:#89ddff;">).</span><span>await</span><span style="color:#89ddff;">;
+</span><span>    assert!</span><span style="color:#89ddff;">(</span><span>mgr</span><span style="color:#89ddff;">.</span><span>nodes</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">is_empty</span><span style="color:#89ddff;">());
+</span><span style="color:#89ddff;">}
+</span></code></pre>
+<p>Each call to <code>teardown_step</code> advances the node exactly one state forward. The test verifies the exact ordering of deregister, drain and remove, and the mocks let us assert which API calls were made along the way.</p>
+<h1 id="further-steps">Further steps</h1>
+<p>The current version is built around our stack: Hetzner and K3s. But the trait-based architecture also lends itself to a few obvious extensions:</p>
+<ul>
+<li><strong>Other cloud providers</strong> like AWS or DigitalOcean behind the same trait</li>
+<li><strong>Full Kubernetes support</strong> beyond K3s, making it usable in managed clusters like EKS, GKE or AKS</li>
+<li><strong>Ephemeral runners</strong> created fresh per job and destroyed after for better isolation</li>
+<li><strong>A Kubernetes controller</strong> so it can run in clusters that already have their own node autoscaling and only manage the runner lifecycle on top</li>
+</ul>
+<p>The project is <a href="https://github.com/rustunit/gitea-ci-autoscaler">MIT licensed</a> and has been running in production for our CI. If you are using Gitea Actions with self-hosted runners and want to stop paying for idle machines, give it a try.</p>
+
+    </div>
+</div>
+
+    <footer>
+        
+        <div class="links">
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.linkedin.com&#x2F;company&#x2F;rustunit&#x2F;" title="LinkedIn">
+                <img alt="LinkedIn" class="icon" src="https://rustunit.com/icons/linkedin.svg" />
+            </a>
+            
+            <a rel="me" href="&#x2F;contact" title="Contact">
+                <img alt="Contact" class="icon" src="https://rustunit.com/icons/mail.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;github.com&#x2F;rustunit" title="GitHub">
+                <img alt="GitHub" class="icon" src="https://rustunit.com/icons/github.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.youtube.com&#x2F;@rustunit_com" title="YouTube">
+                <img alt="YouTube" class="icon" src="https://rustunit.com/icons/youtube.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;mastodon.social&#x2F;@rustunit" title="Mastodon">
+                <img alt="Mastodon" class="icon" src="https://rustunit.com/icons/mastodon.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;bsky.app&#x2F;profile&#x2F;rustunit.com" title="Bsky">
+                <img alt="Bsky" class="icon" src="https://rustunit.com/icons/bsky.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;discord.gg&#x2F;MHzmYHnnsE" title="Discord">
+                <img alt="Discord" class="icon" src="https://rustunit.com/icons/discord.svg" />
+            </a>
+            
+        </div>
+        
+
+        <div>Copyright © 2026 Rustunit</div>
+    </footer>
+</body>
+
+</html>

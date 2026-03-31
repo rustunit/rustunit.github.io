@@ -27,8 +27,6 @@
 <div id="blogpage">
     <div class="date">2026-03-30</div>
     
-    <div class="hidden">hidden</div>
-    
     <h1 class="title">
         Autoscaling CI for Gitea in Rust
     </h1>
@@ -88,17 +86,26 @@
 </span><span style="color:#89ddff;">}
 </span></code></pre>
 <p><code>GiteaClient</code> and <code>KubeClient</code> follow the same pattern. In production we use HTTP-backed implementations. In tests we swap in mocks that track calls and can simulate failures.</p>
-<p>This lets us validate the full teardown lifecycle without spinning up a single server:</p>
+<p>This lets us validate the full teardown lifecycle without spinning up a single server. The following pseudo-code illustrates the approach — seed an idle node and assert both the state transition and the external API call:</p>
 <pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#89ddff;">#[</span><span>tokio::test</span><span style="color:#89ddff;">]
 </span><span>async </span><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">teardown_order</span><span style="color:#89ddff;">() {
 </span><span>    </span><span style="font-style:italic;color:#c792ea;">let</span><span> mock_gitea </span><span style="color:#89ddff;">= </span><span>MockGiteaClient</span><span style="color:#89ddff;">::</span><span>new</span><span style="color:#89ddff;">();
 </span><span>    </span><span style="font-style:italic;color:#c792ea;">let</span><span> mock_kube </span><span style="color:#89ddff;">= </span><span>MockKubeClient</span><span style="color:#89ddff;">::</span><span>new</span><span style="color:#89ddff;">();
 </span><span>    </span><span style="font-style:italic;color:#c792ea;">let</span><span> mock_hetzner </span><span style="color:#89ddff;">= </span><span>MockHetznerClient</span><span style="color:#89ddff;">::</span><span>new</span><span style="color:#89ddff;">();
-</span><span>    </span><span style="font-style:italic;color:#4a4a4a;">// ... set up an idle node ...
+</span><span>    </span><span style="font-style:italic;color:#c792ea;">let </span><span style="color:#c792ea;">mut</span><span> mgr </span><span style="color:#89ddff;">= </span><span>Manager</span><span style="color:#89ddff;">::</span><span>with_node</span><span style="color:#89ddff;">(</span><span>ManagedNode </span><span style="color:#89ddff;">{
+</span><span>        server_id</span><span style="color:#89ddff;">: </span><span style="color:#f78c6c;">42</span><span style="color:#89ddff;">,
+</span><span>        state</span><span style="color:#89ddff;">: </span><span>NodeState</span><span style="color:#89ddff;">::</span><span>Idle </span><span style="color:#89ddff;">{
+</span><span>            k8s_node_name</span><span style="color:#89ddff;">: &quot;</span><span style="color:#c3e88d;">ci-42</span><span style="color:#89ddff;">&quot;.</span><span style="color:#82aaff;">into</span><span style="color:#89ddff;">(),
+</span><span>            gitea_runner_id</span><span style="color:#89ddff;">: </span><span style="color:#f78c6c;">7</span><span style="color:#89ddff;">,
+</span><span>            gitea_runner_name</span><span style="color:#89ddff;">: &quot;</span><span style="color:#c3e88d;">ci-42</span><span style="color:#89ddff;">&quot;.</span><span style="color:#82aaff;">into</span><span style="color:#89ddff;">(),
+</span><span>            idle_since</span><span style="color:#89ddff;">: </span><span>Utc</span><span style="color:#89ddff;">::</span><span>now</span><span style="color:#89ddff;">() - </span><span>chrono</span><span style="color:#89ddff;">::</span><span>Duration</span><span style="color:#89ddff;">::</span><span>minutes</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">10</span><span style="color:#89ddff;">),
+</span><span>        </span><span style="color:#89ddff;">},
+</span><span>    </span><span style="color:#89ddff;">});
 </span><span>
 </span><span>    </span><span style="font-style:italic;color:#4a4a4a;">// Step 1: deregister the Gitea runner
 </span><span>    mgr</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">teardown_step</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">0</span><span style="color:#89ddff;">, &amp;</span><span>mock_gitea</span><span style="color:#89ddff;">, &amp;</span><span>mock_kube</span><span style="color:#89ddff;">, &amp;</span><span>mock_hetzner</span><span style="color:#89ddff;">, &amp;</span><span>metrics</span><span style="color:#89ddff;">).</span><span>await</span><span style="color:#89ddff;">;
 </span><span>    assert!</span><span style="color:#89ddff;">(</span><span>matches!</span><span style="color:#89ddff;">(</span><span>mgr</span><span style="color:#89ddff;">.</span><span>nodes</span><span style="color:#89ddff;">[</span><span style="color:#f78c6c;">0</span><span style="color:#89ddff;">].</span><span>state</span><span style="color:#89ddff;">, </span><span>NodeState</span><span style="color:#89ddff;">::</span><span>Deregistering </span><span style="color:#89ddff;">{ .. }));
+</span><span>    assert_eq!</span><span style="color:#89ddff;">(</span><span>mock_gitea</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">calls</span><span style="color:#89ddff;">(), </span><span>vec!</span><span style="color:#89ddff;">[</span><span>GiteaCall</span><span style="color:#89ddff;">::</span><span>DeregisterRunner</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">7</span><span style="color:#89ddff;">)]);
 </span><span>
 </span><span>    </span><span style="font-style:italic;color:#4a4a4a;">// Step 2: drain the K8s node
 </span><span>    mgr</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">teardown_step</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">0</span><span style="color:#89ddff;">, &amp;</span><span>mock_gitea</span><span style="color:#89ddff;">, &amp;</span><span>mock_kube</span><span style="color:#89ddff;">, &amp;</span><span>mock_hetzner</span><span style="color:#89ddff;">, &amp;</span><span>metrics</span><span style="color:#89ddff;">).</span><span>await</span><span style="color:#89ddff;">;
@@ -109,7 +116,7 @@
 </span><span>    assert!</span><span style="color:#89ddff;">(</span><span>mgr</span><span style="color:#89ddff;">.</span><span>nodes</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">is_empty</span><span style="color:#89ddff;">());
 </span><span style="color:#89ddff;">}
 </span></code></pre>
-<p>Each call to <code>teardown_step</code> advances the node exactly one state forward. The test verifies the exact ordering of deregister, drain and remove, and the mocks let us assert which API calls were made along the way.</p>
+<p>Each call to <code>teardown_step</code> advances the node exactly one state forward. More importantly, the test verifies both the ordering of deregister, drain and remove and the side effects at each step. That is the practical benefit of the trait-based split: we can assert which external API call happened without touching real cloud resources.</p>
 <h1 id="further-steps">Further steps</h1>
 <p>The current version is built around our stack: Hetzner and K3s. But the trait-based architecture also lends itself to a few obvious extensions:</p>
 <ul>

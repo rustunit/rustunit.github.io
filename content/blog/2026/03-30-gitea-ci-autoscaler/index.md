@@ -3,7 +3,6 @@ title = "Autoscaling CI for Gitea in Rust"
 date = 2026-03-30
 [extra]
 tags = ["rust","infra"]
-hidden = true
 custom_summary = "Scaling Hetzner CI nodes for Gitea Actions on demand with Rust and Kubernetes"
 +++
 
@@ -83,7 +82,7 @@ pub trait HetznerClient: Send + Sync {
 
 `GiteaClient` and `KubeClient` follow the same pattern. In production we use HTTP-backed implementations. In tests we swap in mocks that track calls and can simulate failures.
 
-This lets us validate the full teardown lifecycle without spinning up a single server:
+This lets us validate the full teardown lifecycle without spinning up a single server. The following pseudo-code illustrates the approach — seed an idle node and assert both the state transition and the external API call:
 
 ```rust
 #[tokio::test]
@@ -91,11 +90,20 @@ async fn teardown_order() {
     let mock_gitea = MockGiteaClient::new();
     let mock_kube = MockKubeClient::new();
     let mock_hetzner = MockHetznerClient::new();
-    // ... set up an idle node ...
+    let mut mgr = Manager::with_node(ManagedNode {
+        server_id: 42,
+        state: NodeState::Idle {
+            k8s_node_name: "ci-42".into(),
+            gitea_runner_id: 7,
+            gitea_runner_name: "ci-42".into(),
+            idle_since: Utc::now() - chrono::Duration::minutes(10),
+        },
+    });
 
     // Step 1: deregister the Gitea runner
     mgr.teardown_step(0, &mock_gitea, &mock_kube, &mock_hetzner, &metrics).await;
     assert!(matches!(mgr.nodes[0].state, NodeState::Deregistering { .. }));
+    assert_eq!(mock_gitea.calls(), vec![GiteaCall::DeregisterRunner(7)]);
 
     // Step 2: drain the K8s node
     mgr.teardown_step(0, &mock_gitea, &mock_kube, &mock_hetzner, &metrics).await;
@@ -107,7 +115,7 @@ async fn teardown_order() {
 }
 ```
 
-Each call to `teardown_step` advances the node exactly one state forward. The test verifies the exact ordering of deregister, drain and remove, and the mocks let us assert which API calls were made along the way.
+Each call to `teardown_step` advances the node exactly one state forward. More importantly, the test verifies both the ordering of deregister, drain and remove and the side effects at each step. That is the practical benefit of the trait-based split: we can assert which external API call happened without touching real cloud resources.
 
 # Further steps
 

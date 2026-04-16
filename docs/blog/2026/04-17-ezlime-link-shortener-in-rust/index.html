@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>rustunit</title>
+    <meta name="description" content="Rustunit offers software development consulting with a focus on rust, game-development and large scale distributed backend services.">
+
+    <link rel="stylesheet" href="https://rustunit.com/fonts.css">
+    <link rel="stylesheet" href="https://rustunit.com/style.css">
+
+    <script src="https://cdn.usefathom.com/script.js" data-site="TSUIPVAW" defer></script>
+</head>
+
+<body>
+    <header>
+        <a href="https://rustunit.com/">HOME</a>
+        <a href="https://rustunit.com/#games">GAMES</a>
+        <a href="https://rustunit.com/#projects">PROJECTS</a>
+        <a href="https://rustunit.com/bevy-meetup/" style="white-space:nowrap">BEVY MEETUP</a>
+        <a href="https://rustunit.com/blog/">BLOG</a>
+        <a href="https://rustunit.com/contact/">CONTACT</a>
+    </header>
+    
+<div id="blogpage">
+    <div class="date">2026-04-17</div>
+    
+    <div class="hidden">hidden</div>
+    
+    <h1 class="title">
+        Building ezli.me, a link shortener in Rust
+    </h1>
+    <div class="content">
+        <p>In this short post we introduce <a rel="external" href="https://github.com/rustunit/ezlime">ezlime</a>, the small Rust service behind <a rel="external" href="https://ezli.me">ezli.me</a>.</p>
+<h1 id="why-we-built-this">Why we built this</h1>
+<p>We built it for a pretty boring reason. On <a rel="external" href="https://www.live-ask.com">Live-Ask.com</a> we used <a rel="external" href="https://tinyurl.com">TinyURL</a> to shorten event links, and after they tightened their free tier we were about to outgrow it.</p>
+<p>Paying for another SaaS plan would have solved that. But we already run a small K3s cluster with spare capacity, so at that point the question became: how much software do we actually need to redirect a URL?</p>
+<p>Not much, as it turns out. We wanted:</p>
+<ul>
+<li>instant redirects</li>
+<li>a simple link creation API</li>
+<li>minimal stats: click count and last used</li>
+<li>a setup small enough that self-hosting stays worth it</li>
+</ul>
+<h1 id="how-it-works">How it works</h1>
+<p>A request comes in, we check an in-memory cache, fall back to Postgres on a miss, and bump a click counter in memory. A background task batches those counters to the database every few seconds. That is the entire request lifecycle.</p>
+<h1 id="what-actually-runs">What actually runs</h1>
+<p>The service is using <code>axum</code>, <code>tokio</code> and PostgreSQL. Database access goes through <code>diesel</code>, and migrations are baked into the binary.</p>
+<p>For redirects we keep hot links in an in-memory <a rel="external" href="https://crates.io/crates/quick_cache"><code>quick_cache</code></a>, so popular IDs usually do not hit the database at all. Public link creation goes through <a rel="external" href="https://developers.cloudflare.com/turnstile/">Cloudflare Turnstile</a>. Authenticated clients can use API keys. There is no account system and no tracking.</p>
+<p>In production this runs as two replicas in our K3s cluster with <code>10m</code> CPU / <code>32Mi</code> memory requests and <code>100m</code> CPU / <code>128Mi</code> memory limits. The landing page at <a rel="external" href="https://ezli.me">ezli.me</a> is plain static HTML/CSS.</p>
+<h1 id="the-hot-path">The hot path</h1>
+<p>The redirect handler is intentionally tiny:</p>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="rust"><span class="giallo-l"><span style="color: #F78C6C;">pub async fn</span><span style="color: #82AAFF;"> redirect</span><span style="color: #89DDFF;">(&amp;</span><span>self</span><span style="color: #89DDFF;">,</span><span> id</span><span style="color: #89DDFF;">: &amp;</span><span style="color: #FFCB6B;">str</span><span style="color: #89DDFF;">) -&gt;</span><span style="color: #FFCB6B;"> Result</span><span style="color: #89DDFF;">&lt;</span><span style="color: #FFCB6B;">String</span><span style="color: #89DDFF;">,</span><span> anyhow</span><span style="color: #89DDFF;">::</span><span style="color: #FFCB6B;">Error</span><span style="color: #89DDFF;">&gt; {</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;font-style: italic;">    if</span><span> id</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">contains</span><span style="color: #89DDFF;">(&quot;</span><span style="color: #C3E88D;">.</span><span style="color: #89DDFF;">&quot;) ||</span><span> id</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">is_empty</span><span style="color: #89DDFF;">() {</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">        anyhow</span><span style="color: #89DDFF;">::</span><span style="color: #82AAFF;">bail!</span><span style="color: #89DDFF;">(&quot;</span><span style="color: #C3E88D;">invalid id</span><span style="color: #89DDFF;">&quot;);</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">    }</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #89DDFF;font-style: italic;">    if</span><span style="color: #C792EA;"> let</span><span style="color: #FFCB6B;"> Some</span><span style="color: #89DDFF;">(</span><span>link</span><span style="color: #89DDFF;">) =</span><span> self</span><span style="color: #89DDFF;">.</span><span>cache</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">get</span><span style="color: #89DDFF;">(</span><span>id</span><span style="color: #89DDFF;">) {</span></span>
+<span class="giallo-l"><span>        self</span><span style="color: #89DDFF;">.</span><span>click_counter</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">increment</span><span style="color: #89DDFF;">(</span><span>id</span><span style="color: #89DDFF;">).</span><span style="color: #89DDFF;font-style: italic;">await</span><span style="color: #89DDFF;">;</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;font-style: italic;">        return</span><span style="color: #FFCB6B;"> Ok</span><span style="color: #89DDFF;">(</span><span>link</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">clone</span><span style="color: #89DDFF;">());</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">    }</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #C792EA;">    let</span><span style="color: #FFCB6B;"> Some</span><span style="color: #89DDFF;">(</span><span>link</span><span style="color: #89DDFF;">) =</span><span> self</span><span style="color: #89DDFF;">.</span><span>db</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">get</span><span style="color: #89DDFF;">(</span><span>id</span><span style="color: #89DDFF;">).</span><span style="color: #89DDFF;font-style: italic;">await</span><span style="color: #89DDFF;">?</span><span style="color: #89DDFF;font-style: italic;"> else</span><span style="color: #89DDFF;"> {</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">        anyhow</span><span style="color: #89DDFF;">::</span><span style="color: #82AAFF;">bail!</span><span style="color: #89DDFF;">(&quot;</span><span style="color: #C3E88D;">unknown link</span><span style="color: #89DDFF;">&quot;)</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">    };</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>    self</span><span style="color: #89DDFF;">.</span><span>cache</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">insert</span><span style="color: #89DDFF;">(</span><span>id</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">to_string</span><span style="color: #89DDFF;">(),</span><span> link</span><span style="color: #89DDFF;">.</span><span>url</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">clone</span><span style="color: #89DDFF;">());</span></span>
+<span class="giallo-l"><span>    self</span><span style="color: #89DDFF;">.</span><span>click_counter</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">increment</span><span style="color: #89DDFF;">(</span><span>id</span><span style="color: #89DDFF;">).</span><span style="color: #89DDFF;font-style: italic;">await</span><span style="color: #89DDFF;">;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">    Ok</span><span style="color: #89DDFF;">(</span><span>link</span><span style="color: #89DDFF;">.</span><span>url</span><span style="color: #89DDFF;">)</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">}</span></span></code></pre>
+<p>There are only two real cases here. On a cache hit we return immediately and only bump an in-memory counter. On a miss we do one database lookup, put the result into the cache, and return that.</p>
+<p>The important part is what does not happen on the request path: a click does not become a Postgres write.</p>
+<h1 id="keeping-writes-off-the-request-path">Keeping writes off the request path</h1>
+<p><code>ClickCounter</code> accumulates click counts and <code>last_used</code> timestamps in memory. A background task drains that state and flushes it to Postgres every few seconds:</p>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="rust"><span class="giallo-l"><span style="color: #F78C6C;">pub async fn</span><span style="color: #82AAFF;"> start_counter_flusher</span><span style="color: #89DDFF;">(</span></span>
+<span class="giallo-l"><span>    counter</span><span style="color: #89DDFF;">:</span><span style="color: #FFCB6B;"> Arc</span><span style="color: #89DDFF;">&lt;</span><span style="color: #FFCB6B;">ClickCounter</span><span style="color: #89DDFF;">&gt;,</span></span>
+<span class="giallo-l"><span>    db</span><span style="color: #89DDFF;">:</span><span style="color: #FFCB6B;"> DbPool</span><span style="color: #89DDFF;">,</span></span>
+<span class="giallo-l"><span>    interval_duration</span><span style="color: #89DDFF;">:</span><span style="color: #FFCB6B;"> Duration</span><span style="color: #89DDFF;">,</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">) {</span></span>
+<span class="giallo-l"><span style="color: #C792EA;">    let mut</span><span> ticker</span><span style="color: #89DDFF;"> =</span><span style="color: #82AAFF;"> interval</span><span style="color: #89DDFF;">(</span><span>interval_duration</span><span style="color: #89DDFF;">);</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;font-style: italic;">    loop</span><span style="color: #89DDFF;"> {</span></span>
+<span class="giallo-l"><span>        ticker</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">tick</span><span style="color: #89DDFF;">().</span><span style="color: #89DDFF;font-style: italic;">await</span><span style="color: #89DDFF;">;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #C792EA;">        let</span><span> counts</span><span style="color: #89DDFF;"> =</span><span> counter</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">drain</span><span style="color: #89DDFF;">().</span><span style="color: #89DDFF;font-style: italic;">await</span><span style="color: #89DDFF;">;</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;font-style: italic;">        if</span><span> counts</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">is_empty</span><span style="color: #89DDFF;">() {</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;font-style: italic;">            continue</span><span style="color: #89DDFF;">;</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">        }</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #89DDFF;font-style: italic;">        if</span><span style="color: #C792EA;"> let</span><span style="color: #FFCB6B;"> Err</span><span style="color: #89DDFF;">(</span><span>e</span><span style="color: #89DDFF;">) =</span><span style="color: #82AAFF;"> flush_counts_to_db</span><span style="color: #89DDFF;">(</span><span>db</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">clone</span><span style="color: #89DDFF;">(),</span><span> counts</span><span style="color: #89DDFF;">).</span><span style="color: #89DDFF;font-style: italic;">await</span><span style="color: #89DDFF;"> {</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">            tracing</span><span style="color: #89DDFF;">::</span><span style="color: #82AAFF;">error!</span><span style="color: #89DDFF;">(&quot;</span><span style="color: #C3E88D;">failed to flush click counts: </span><span style="color: #89DDFF;">{</span><span style="color: #C3E88D;">e</span><span style="color: #89DDFF;">}&quot;);</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">        }</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">    }</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">}</span></span></code></pre>
+<p>Flushing means one bulk <code>UPDATE</code> query:</p>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="sql"><span class="giallo-l"><span style="color: #F78C6C;">UPDATE</span><span> links </span><span style="color: #F78C6C;">AS</span><span> l</span></span>
+<span class="giallo-l"><span style="color: #F78C6C;">SET</span></span>
+<span class="giallo-l"><span>    click_count </span><span style="color: #89DDFF;">=</span><span> l.click_count</span><span style="color: #89DDFF;"> +</span><span> v.inc,</span></span>
+<span class="giallo-l"><span>    last_used   </span><span style="color: #89DDFF;">=</span><span style="color: #82AAFF;"> GREATEST</span><span>(l.last_used, v.ts)</span></span>
+<span class="giallo-l"><span style="color: #F78C6C;">FROM</span><span> (</span></span>
+<span class="giallo-l"><span style="color: #F78C6C;">    SELECT</span></span>
+<span class="giallo-l"><span>        unnest(link_ids)  </span><span style="color: #F78C6C;">AS</span><span> link_id,</span></span>
+<span class="giallo-l"><span>        unnest(increments) </span><span style="color: #F78C6C;">AS</span><span> inc,</span></span>
+<span class="giallo-l"><span>        unnest(</span><span style="color: #C792EA;">timestamps</span><span>) </span><span style="color: #F78C6C;">AS</span><span> ts</span></span>
+<span class="giallo-l"><span>) </span><span style="color: #F78C6C;">AS</span><span> v</span></span>
+<span class="giallo-l"><span style="color: #F78C6C;">WHERE</span><span> l.id</span><span style="color: #89DDFF;"> =</span><span> v.link_id;</span></span></code></pre>
+<p>If one link gets clicked a thousand times in 3 seconds, that still becomes one row update in the next flush, not a thousand separate writes.</p>
+<blockquote>
+<p><code>GREATEST</code> on <code>last_used</code> also makes concurrent flushing across replicas safe. A slower replica cannot clobber a newer timestamp from another one.</p>
+</blockquote>
+<p>There is nothing fancy here, which is exactly the point. The hot path stays small, the write path stays cheap, and there is very little to reason about in production.</p>
+<h1 id="short-ids">Short IDs</h1>
+<p>Short IDs are deterministic. We hash the original URL and base62-encode it, so the same URL gets the same short code. If two different URLs collide, we retry with an offset in the hash input until they no longer do.</p>
+<h1 id="small-footprint">Small footprint</h1>
+<p>This is the part that made it worth building for us. The running system is:</p>
+<ul>
+<li>one Rust binary</li>
+<li>one Postgres database</li>
+<li>one small K3s deployment in infrastructure we already have</li>
+</ul>
+<p>There is no Redis, no queue, no analytics pipeline and no admin backend. We get tracing logs, Prometheus metrics and a health endpoint and call it a day.</p>
+<p>That is when self-hosting starts to make sense: when the service just slots into the platform you already run instead of dragging more infrastructure behind it.</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>ezli.me only makes sense for us because the rest of the platform is already there. Once that box is checked, a link shortener really is just Rust, Postgres, an in-memory cache and a tiny K3s deployment.</p>
+<p>The project is on <a rel="external" href="https://github.com/rustunit/ezlime">GitHub</a>, dual-licensed MIT / Apache-2.0. If you want to run your own, give it a try.</p>
+<hr />
+<p>Want to use the hosted ezli.me API? Join our <a rel="external" href="https://discord.gg/MHzmYHnnsE">Discord</a> and reach out to get an API key.</p>
+
+    </div>
+</div>
+
+    <footer>
+        
+        <div class="links">
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.linkedin.com&#x2F;company&#x2F;rustunit&#x2F;" title="LinkedIn">
+                <img alt="LinkedIn" class="icon" src="https://rustunit.com/icons/linkedin.svg" />
+            </a>
+            
+            <a rel="me" href="&#x2F;contact" title="Contact">
+                <img alt="Contact" class="icon" src="https://rustunit.com/icons/mail.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;github.com&#x2F;rustunit" title="GitHub">
+                <img alt="GitHub" class="icon" src="https://rustunit.com/icons/github.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.youtube.com&#x2F;@rustunit_com" title="YouTube">
+                <img alt="YouTube" class="icon" src="https://rustunit.com/icons/youtube.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;mastodon.social&#x2F;@rustunit" title="Mastodon">
+                <img alt="Mastodon" class="icon" src="https://rustunit.com/icons/mastodon.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;bsky.app&#x2F;profile&#x2F;rustunit.com" title="Bsky">
+                <img alt="Bsky" class="icon" src="https://rustunit.com/icons/bsky.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;discord.gg&#x2F;MHzmYHnnsE" title="Discord">
+                <img alt="Discord" class="icon" src="https://rustunit.com/icons/discord.svg" />
+            </a>
+            
+        </div>
+        
+
+        <div>Copyright © 2026 Rustunit</div>
+    </footer>
+</body>
+
+</html>

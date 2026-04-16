@@ -33,31 +33,29 @@
     <div class="content">
         <p>In this short post we look at how to debug a recent build breakage we encountered due to a <em>feature</em> being enabled on one of our dependencies that is not compatible with our build target: <strong>wasm</strong>.</p>
 <h1 id="what-happened">What happened</h1>
-<p>After porting our bevy based game <a href="https://tinytakeoff.com">tinytakeoff</a> to the newest Bevy release: <a href="https://bevyengine.org/news/bevy-0-15/">0.15</a> our build broke with the following error on <strong>wasm</strong>:</p>
-<pre data-lang="sh" style="background-color:#212121;color:#eeffff;" class="language-sh "><code class="language-sh" data-lang="sh"><span>cargo:warning</span><span style="color:#89ddff;">=</span><span style="color:#c3e88d;">In </span><span style="color:#82aaff;">file included from vendor/basis_universal/encoder/pvpngreader.cpp:14:
-</span><span>cargo:warning</span><span style="color:#89ddff;">=</span><span style="color:#c3e88d;">vendor/basis_universal/encoder/../transcoder/basisu.h:53:10: </span><span style="color:#82aaff;">fatal error: </span><span style="color:#89ddff;">&#39;</span><span style="color:#c3e88d;">stdlib.h</span><span style="color:#89ddff;">&#39;</span><span style="color:#82aaff;"> file not found
-</span><span>cargo:warning</span><span style="color:#89ddff;">=   </span><span style="color:#82aaff;">53 </span><span style="color:#89ddff;">| </span><span style="font-style:italic;color:#4a4a4a;">#include &lt;stdlib.h&gt;
-</span><span>cargo:warning</span><span style="color:#89ddff;">=      |          </span><span style="color:#82aaff;">^</span><span style="font-style:italic;color:#ff5370;">~~~~~~~~~
-</span><span>cargo:warning</span><span style="color:#89ddff;">=</span><span style="color:#c3e88d;">1 </span><span style="color:#82aaff;">error generated.
-</span></code></pre>
+<p>After porting our bevy based game <a rel="external" href="https://tinytakeoff.com">tinytakeoff</a> to the newest Bevy release: <a rel="external" href="https://bevyengine.org/news/bevy-0-15/">0.15</a> our build broke with the following error on <strong>wasm</strong>:</p>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #FFCB6B;">cargo:warning</span><span style="color: #C3E88D;">=In file included from vendor/basis_universal/encoder/pvpngreader.cpp:14:</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">cargo:warning</span><span style="color: #C3E88D;">=vendor/basis_universal/encoder/</span><span style="color: #82AAFF;">.</span><span style="color: #C3E88D;">./transcoder/basisu.h:53:10: fatal error:</span><span style="color: #89DDFF;"> &#39;</span><span style="color: #C3E88D;">stdlib.h</span><span style="color: #89DDFF;">&#39;</span><span style="color: #C3E88D;"> file not found</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">cargo:warning</span><span style="color: #C3E88D;">=</span><span style="color: #F78C6C;">   53</span><span style="color: #89DDFF;"> |</span><span style="color: #545454;font-style: italic;"> #include &lt;stdlib.h&gt;</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">cargo:warning</span><span style="color: #C3E88D;">=</span><span style="color: #89DDFF;">      |</span><span style="color: #FFCB6B;">          ^~~~~~~~~~</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">cargo:warning</span><span style="color: #C3E88D;">=1 error generated.</span></span></code></pre>
 <p>So it looks like some crate is trying to build C-code under the hood which depends on <code>stdlib.h</code>. While this is not a problem on native build targets, it will not work on <strong>Wasm</strong>.</p>
-<p>The code in question belongs to the <code>basis-universal</code> crate, what could that be good for? Reading up on it's <a href="https://crates.io/crates/basis-universal">crates.io page</a> we find out that it is:</p>
+<p>The code in question belongs to the <code>basis-universal</code> crate, what could that be good for? Reading up on it's <a rel="external" href="https://crates.io/crates/basis-universal">crates.io page</a> we find out that it is:</p>
 <blockquote>
 <p>Bindings for Binomial LLC's basis-universal Supercompressed GPU Texture Codec</p>
 </blockquote>
-<p>Looking into the <a href="https://bevyengine.org/learn/migration-guides/0-14-to-0-15">Bevy Migration Guide for 0.14 to 0.15</a> we find exactly one <a href="https://bevyengine.org/learn/migration-guides/0-14-to-0-15/#add-feature-requirement-info-to-image-loading-docs">place</a> of it being mentioned:</p>
+<p>Looking into the <a rel="external" href="https://bevyengine.org/learn/migration-guides/0-14-to-0-15">Bevy Migration Guide for 0.14 to 0.15</a> we find exactly one <a rel="external" href="https://bevyengine.org/learn/migration-guides/0-14-to-0-15/#add-feature-requirement-info-to-image-loading-docs">place</a> of it being mentioned:</p>
 <img src="screen1.png" alt="changelog screenshot" class="centered" style="max-width: 70%"/>
 <p>So this dependency is for sure nothing we need as we did not start making use of said image format. How did it get introduced?</p>
 <p>Let's find the cause for this.</p>
 <h1 id="how-to-find-the-cause">How to find the cause</h1>
 <p>We first want to find out where in our tree of dependencies this one is used. <code>cargo tree</code> is the tool to help you analyze your dependencies as the graph structure they make up.</p>
 <p>When running <code>cargo tree</code>, we get over 1.000 outputted lines that we have to search, for somewhere inside this haystack is <code>basis-universal</code>:</p>
-<pre data-lang="sh" style="background-color:#212121;color:#eeffff;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#82aaff;">│       │   ├── bevy_image v0.15.0
-</span><span style="color:#82aaff;">│       │   │   ├── basis-universal v0.3.1
-</span><span style="color:#82aaff;">│       │   │   │   ├── basis-universal-sys v0.3.1
-</span><span style="color:#82aaff;">│       │   │   │   │   </span><span style="font-style:italic;color:#c792ea;">[</span><span style="color:#82aaff;">build</span><span style="color:#89ddff;">-</span><span style="color:#82aaff;">dependencies</span><span style="font-style:italic;color:#c792ea;">]
-</span><span style="color:#82aaff;">│       │   │   │   │   └── cc v1.2.3 (</span><span style="color:#89ddff;">*</span><span>)
-</span></code></pre>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">       │   ├── bevy_image v0.15.0</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">       │   │   ├── basis-universal v0.3.1</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">       │   │   │   ├── basis-universal-sys v0.3.1</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">       │   │   │   │</span><span>   [build-dependencies]</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">       │   │   │   │   └── cc v1.2.3</span><span> (*)</span></span></code></pre>
 <p>We got a winner. It is used by <code>bevy_image</code>. The problem is that we do not know why. Based on the changelog linked above we know it is supposed to be behind a <code>feature</code> flag called <code>basis_universal</code>, looking at our <code>Cargo.toml</code> we do not enable it though.</p>
 <blockquote>
 <p>Cargo will enable the minimum subset of <code>features</code> needed so that every dependency using <code>bevy</code> gets the features they ask for.</p>
@@ -66,38 +64,34 @@
 <h1 id="playing-cargo-feature-detective">Playing Cargo Feature Detective</h1>
 <p>There is a little-known feature in <code>cargo tree</code> that allows us to not only see our dependency tree but also the features that are enabled in each crate.</p>
 <p>Running <code>cargo tree -e features</code> in our repository root we get over 3.000 lines of this:</p>
-<pre data-lang="sh" style="background-color:#212121;color:#eeffff;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#82aaff;">├── winit v0.30.5
-</span><span style="color:#82aaff;">│   ├── tracing v0.1.41
-</span><span style="color:#82aaff;">│   │   ├── tracing-core v0.1.33
-</span><span style="color:#82aaff;">│   │   │   └── once_cell feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">default</span><span style="color:#89ddff;">&quot;
-</span><span style="color:#82aaff;">│   │   │       ├── once_cell v1.20.2
-</span><span style="color:#82aaff;">│   │   │       └── once_cell feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">std</span><span style="color:#89ddff;">&quot;
-</span><span style="color:#82aaff;">│   │   │           ├── once_cell v1.20.2
-</span><span style="color:#82aaff;">│   │   │           └── once_cell feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">alloc</span><span style="color:#89ddff;">&quot;
-</span><span style="color:#82aaff;">│   │   │               ├── once_cell v1.20.2
-</span><span style="color:#82aaff;">│   │   │               └── once_cell feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">race</span><span style="color:#89ddff;">&quot;
-</span><span style="color:#82aaff;">│   │   │                   └── once_cell v1.20.2
-</span><span style="color:#82aaff;">│   │   ├── pin-project-lite feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">default</span><span style="color:#89ddff;">&quot;
-</span><span style="color:#82aaff;">│   │   │   └── pin-project-lite v0.2.15
-</span><span style="color:#82aaff;">│   │   └── tracing-attributes feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">default</span><span style="color:#89ddff;">&quot;
-</span><span style="color:#82aaff;">│   │       └── tracing-attributes v0.1.28 (proc-macro</span><span>)
-</span></code></pre>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #FFCB6B;">├──</span><span style="color: #C3E88D;"> winit v0.30.5</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">   ├── tracing v0.1.41</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">   │   ├── tracing-core v0.1.33</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">   │   │   └── once_cell feature</span><span style="color: #89DDFF;"> &quot;</span><span style="color: #C3E88D;">default</span><span style="color: #89DDFF;">&quot;</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">   │   │       ├── once_cell v1.20.2</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">   │   │       └── once_cell feature</span><span style="color: #89DDFF;"> &quot;</span><span style="color: #C3E88D;">std</span><span style="color: #89DDFF;">&quot;</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">   │   │           ├── once_cell v1.20.2</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">   │   │           └── once_cell feature</span><span style="color: #89DDFF;"> &quot;</span><span style="color: #C3E88D;">alloc</span><span style="color: #89DDFF;">&quot;</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">   │   │               ├── once_cell v1.20.2</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">   │   │               └── once_cell feature</span><span style="color: #89DDFF;"> &quot;</span><span style="color: #C3E88D;">race</span><span style="color: #89DDFF;">&quot;</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">   │   │                   └── once_cell v1.20.2</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">   │   ├── pin-project-lite feature</span><span style="color: #89DDFF;"> &quot;</span><span style="color: #C3E88D;">default</span><span style="color: #89DDFF;">&quot;</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">   │   │   └── pin-project-lite v0.2.15</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">   │   └── tracing-attributes feature</span><span style="color: #89DDFF;"> &quot;</span><span style="color: #C3E88D;">default</span><span style="color: #89DDFF;">&quot;</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">   │       └── tracing-attributes v0.1.28</span><span> (proc-macro)</span></span></code></pre>
 <p>Luckily we now know already what feature we are looking for: <code>basis-universal</code>, so let's search for <code>bevy feature "basis-universal"</code>:</p>
-<pre data-lang="sh" style="background-color:#212121;color:#eeffff;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#82aaff;">├── bevy_libgdx_atlas feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">default</span><span style="color:#89ddff;">&quot;
-</span><span style="color:#82aaff;">│   └── bevy_libgdx_atlas v0.3.0
-</span><span style="color:#82aaff;">│       ├── bevy feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">basis-universal</span><span style="color:#89ddff;">&quot;
-</span><span style="color:#82aaff;">│       │   ├── bevy v0.15.0 (</span><span style="color:#89ddff;">*</span><span>)
-</span></code></pre>
-<p>Here we go. Our own crate <code>bevy_libgdx_atlas</code> enables the feature <code>basis-universal</code> which in turn enables the dependency <code>basis-universal</code> which breaks our build on <strong>wasm</strong>. That makes it easier to fix. Funny enough it was used to enable <code>bevy_image</code> while trying to depend on the smallest subset of features of <code>bevy</code>. This is a known issue in Bevy 0.15, see <a href="https://github.com/bevyengine/bevy/issues/16563">#16563</a>. But there is a cleaner workaround by just enabling the <code>bevy_image</code> feature in <code>bevy_internal</code> see <a href="https://github.com/rustunit/bevy_libgdx_atlas/commit/20cb2e99ef8dd696dfbbff3ef120591cae82703b">here</a>.</p>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #FFCB6B;">├──</span><span style="color: #C3E88D;"> bevy_libgdx_atlas feature</span><span style="color: #89DDFF;"> &quot;</span><span style="color: #C3E88D;">default</span><span style="color: #89DDFF;">&quot;</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">   └── bevy_libgdx_atlas v0.3.0</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">       ├── bevy feature</span><span style="color: #89DDFF;"> &quot;</span><span style="color: #C3E88D;">basis-universal</span><span style="color: #89DDFF;">&quot;</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">       │   ├── bevy v0.15.0</span><span> (*)</span></span></code></pre>
+<p>Here we go. Our own crate <code>bevy_libgdx_atlas</code> enables the feature <code>basis-universal</code> which in turn enables the dependency <code>basis-universal</code> which breaks our build on <strong>wasm</strong>. That makes it easier to fix. Funny enough it was used to enable <code>bevy_image</code> while trying to depend on the smallest subset of features of <code>bevy</code>. This is a known issue in Bevy 0.15, see <a rel="external" href="https://github.com/bevyengine/bevy/issues/16563">#16563</a>. But there is a cleaner workaround by just enabling the <code>bevy_image</code> feature in <code>bevy_internal</code> see <a rel="external" href="https://github.com/rustunit/bevy_libgdx_atlas/commit/20cb2e99ef8dd696dfbbff3ef120591cae82703b">here</a>.</p>
 <h2 id="improving-ergonomics">Improving ergonomics</h2>
 <p>In case you run into multiple crates doing this and depending on said feature it is more ergonomic to invert the tree using: <code>cargo tree -e features -p bevy --invert</code>.
 With this we limit our root to <code>bevy</code> and we will find <em>one</em> entry for the feature and a subtree of dependencies using it:</p>
-<pre data-lang="sh" style="background-color:#212121;color:#eeffff;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#82aaff;">├── bevy feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">basis-universal</span><span style="color:#89ddff;">&quot;
-</span><span style="color:#82aaff;">│   └── bevy_libgdx_atlas v0.3.0
-</span><span style="color:#82aaff;">│       └── bevy_libgdx_atlas feature </span><span style="color:#89ddff;">&quot;</span><span style="color:#c3e88d;">default</span><span style="color:#89ddff;">&quot;
-</span><span style="color:#82aaff;">│           └── tinytakeoff v0.1.1
-</span></code></pre>
-<h1 id="conclusion">Conclusion</h1>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #FFCB6B;">├──</span><span style="color: #C3E88D;"> bevy feature</span><span style="color: #89DDFF;"> &quot;</span><span style="color: #C3E88D;">basis-universal</span><span style="color: #89DDFF;">&quot;</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">   └── bevy_libgdx_atlas v0.3.0</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">       └── bevy_libgdx_atlas feature</span><span style="color: #89DDFF;"> &quot;</span><span style="color: #C3E88D;">default</span><span style="color: #89DDFF;">&quot;</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">│</span><span style="color: #C3E88D;">           └── tinytakeoff v0.1.1</span></span></code></pre><h1 id="conclusion">Conclusion</h1>
 <p>The feature option in <code>cargo tree</code> is a very powerful tool in fighting against the subtle way dependencies and features in them can creep into your codebase.</p>
 <p>Since it is close to Christmas I want to make a wishlist to improve the situation:</p>
 <ol>

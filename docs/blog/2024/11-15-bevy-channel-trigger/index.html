@@ -32,53 +32,52 @@
     </h1>
     <div class="content">
         <p>In this short post we introduce the recently released
-<a href="https://crates.io/crates/bevy_channel_trigger">bevy_channel_trigger</a> crate,
+<a rel="external" href="https://crates.io/crates/bevy_channel_trigger">bevy_channel_trigger</a> crate,
 why we need it to talk to foreign code and what sets it apart from alternatives.
-If you just want to start using it, find it on <a href="https://github.com/rustunit/bevy_channel_trigger">GitHub</a>.</p>
+If you just want to start using it, find it on <a rel="external" href="https://github.com/rustunit/bevy_channel_trigger">GitHub</a>.</p>
 <img src="schema.png" alt="schema" style="width: 50%; max-width: 500px" class="inline-img" />
 <h1 id="why">Why?</h1>
 <p>Let's start with why we need to talk to C libraries or any other language in the first place. Bevy is written in Rust, Rust is great but not everything can be supported in Rust natively:</p>
 <ul>
 <li>maybe you want to interface with libraries that are closed source like Apple's native iOS libraries</li>
-<li>maybe you want to talk to web APIs using <a href="https://github.com/rustwasm/wasm-bindgen">wasm-bindgen</a> because your game runs on the web</li>
-<li>maybe because time is finite and you don't want to <a href="https://transitiontech.ca/random/RIIR">RiiR</a> (Rewrite it in Rust) all the way down</li>
+<li>maybe you want to talk to web APIs using <a rel="external" href="https://github.com/rustwasm/wasm-bindgen">wasm-bindgen</a> because your game runs on the web</li>
+<li>maybe because time is finite and you don't want to <a rel="external" href="https://transitiontech.ca/random/RIIR">RiiR</a> (Rewrite it in Rust) all the way down</li>
 </ul>
 <p>You can just call foreign functions of course right from your Bevy Systems but that is often not a good idea as we don't want to block our game logic. Often these APIs are async as well which means they will produce a result sometime later that we then want to receive back in our Bevy Systems. The schema on the right visualizes this.</p>
-<p>This is where channels like <a href="https://github.com/crossbeam-rs/crossbeam">crossbeam</a>, <a href="https://docs.rs/async-channel/latest/async_channel/">async-channel</a> or <a href="https://github.com/zesterer/flume">flume</a> come in handy to communicate back into our Bevy game logic.</p>
+<p>This is where channels like <a rel="external" href="https://github.com/crossbeam-rs/crossbeam">crossbeam</a>, <a rel="external" href="https://docs.rs/async-channel/latest/async_channel/">async-channel</a> or <a rel="external" href="https://github.com/zesterer/flume">flume</a> come in handy to communicate back into our Bevy game logic.</p>
 <p>Lets look at a very simple example.</p>
 <h1 id="show-me-an-example">Show me an example</h1>
 <p>In this example we show how to define an Event type <code>MyEvent</code> (line <strong>2</strong>)
 that we want to send as a reaction to a foreign function calling us
 (via callbacks or any other mechanism).</p>
-<pre data-linenos data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><table><tbody><tr><td>1</td><td><span style="color:#89ddff;">#[</span><span>derive</span><span style="color:#89ddff;">(</span><span>Event</span><span style="color:#89ddff;">)]
-</span></td></tr><tr><td>2</td><td><span style="font-style:italic;color:#c792ea;">struct </span><span>MyEvent</span><span style="color:#89ddff;">(</span><span style="font-style:italic;color:#c792ea;">i32</span><span style="color:#89ddff;">);
-</span></td></tr><tr><td>3</td><td><span>
-</span></td></tr><tr><td>4</td><td><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">main</span><span style="color:#89ddff;">() {
-</span></td></tr><tr><td>5</td><td><span>    </span><span style="color:#c792ea;">use </span><span>bevy_channel_trigger</span><span style="color:#89ddff;">::</span><span>ChannelTriggerApp</span><span style="color:#89ddff;">;
-</span></td></tr><tr><td>6</td><td><span>
-</span></td></tr><tr><td>7</td><td><span>    </span><span style="font-style:italic;color:#c792ea;">let </span><span style="color:#c792ea;">mut</span><span> app </span><span style="color:#89ddff;">= </span><span>App</span><span style="color:#89ddff;">::</span><span>new</span><span style="color:#89ddff;">();
-</span></td></tr><tr><td>8</td><td><span>    app</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">add_plugins</span><span style="color:#89ddff;">(</span><span>MinimalPlugins</span><span style="color:#89ddff;">);
-</span></td></tr><tr><td>9</td><td><span>
-</span></td></tr><tr><td>10</td><td><span>    </span><span style="font-style:italic;color:#4a4a4a;">// create channel
-</span></td></tr><tr><td>11</td><td><span>    </span><span style="font-style:italic;color:#c792ea;">let</span><span> sender </span><span style="color:#89ddff;">=</span><span> app</span><span style="color:#89ddff;">.</span><span>add_channel_trigger</span><span style="color:#89ddff;">::&lt;</span><span>MyEvent</span><span style="color:#89ddff;">&gt;();
-</span></td></tr><tr><td>12</td><td><span>
-</span></td></tr><tr><td>13</td><td><span>    </span><span style="font-style:italic;color:#4a4a4a;">// use sender from anywhere:
-</span></td></tr><tr><td>14</td><td><span>    thread</span><span style="color:#89ddff;">::</span><span>spawn</span><span style="color:#89ddff;">(</span><span style="color:#c792ea;">move </span><span style="color:#89ddff;">|| {
-</span></td></tr><tr><td>15</td><td><span>        </span><span style="font-style:italic;color:#c792ea;">let </span><span style="color:#c792ea;">mut</span><span> counter </span><span style="color:#89ddff;">= </span><span style="color:#f78c6c;">1</span><span style="color:#89ddff;">;
-</span></td></tr><tr><td>16</td><td><span>        </span><span style="font-style:italic;color:#c792ea;">loop </span><span style="color:#89ddff;">{
-</span></td></tr><tr><td>17</td><td><span>            </span><span style="font-style:italic;color:#4a4a4a;">// send events back to bevy
-</span></td></tr><tr><td>18</td><td><span>            sender</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">send</span><span style="color:#89ddff;">(</span><span>MyEvent</span><span style="color:#89ddff;">(</span><span>counter</span><span style="color:#89ddff;">));
-</span></td></tr><tr><td>19</td><td><span>            thread</span><span style="color:#89ddff;">::</span><span>sleep</span><span style="color:#89ddff;">(</span><span>Duration</span><span style="color:#89ddff;">::</span><span>from_secs</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">1</span><span style="color:#89ddff;">));
-</span></td></tr><tr><td>20</td><td><span>            counter </span><span style="color:#89ddff;">+= </span><span style="color:#f78c6c;">1</span><span style="color:#89ddff;">;
-</span></td></tr><tr><td>21</td><td><span>        </span><span style="color:#89ddff;">}
-</span></td></tr><tr><td>22</td><td><span>    </span><span style="color:#89ddff;">});
-</span></td></tr><tr><td>23</td><td><span>
-</span></td></tr><tr><td>24</td><td><span>    </span><span style="font-style:italic;color:#4a4a4a;">// register an observer to receive the events sent via `sender`
-</span></td></tr><tr><td>25</td><td><span>    app</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">observe</span><span style="color:#89ddff;">(</span><span>on_event</span><span style="color:#89ddff;">);
-</span></td></tr><tr><td>26</td><td><span>
-</span></td></tr><tr><td>27</td><td><span>    app</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">run</span><span style="color:#89ddff;">();
-</span></td></tr><tr><td>28</td><td><span style="color:#89ddff;">}
-</span></td></tr></tbody></table></code></pre>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="rust"><span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;"> 1</span><span style="color: #89DDFF;">#[</span><span>derive</span><span style="color: #89DDFF;">(</span><span style="color: #FFCB6B;">Event</span><span style="color: #89DDFF;">)]</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;"> 2</span><span style="color: #C792EA;">struct</span><span style="color: #FFCB6B;"> MyEvent</span><span style="color: #89DDFF;">(</span><span style="color: #FFCB6B;">i32</span><span style="color: #89DDFF;">);</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;"> 3</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;"> 4</span><span style="color: #F78C6C;">fn</span><span style="color: #82AAFF;"> main</span><span style="color: #89DDFF;">() {</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;"> 5</span><span style="color: #F78C6C;">    use</span><span style="color: #FFCB6B;"> bevy_channel_trigger</span><span style="color: #89DDFF;">::</span><span style="color: #FFCB6B;">ChannelTriggerApp</span><span style="color: #89DDFF;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;"> 6</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;"> 7</span><span style="color: #C792EA;">    let mut</span><span> app</span><span style="color: #89DDFF;"> =</span><span style="color: #FFCB6B;"> App</span><span style="color: #89DDFF;">::</span><span style="color: #82AAFF;">new</span><span style="color: #89DDFF;">();</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;"> 8</span><span>    app</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">add_plugins</span><span style="color: #89DDFF;">(</span><span style="color: #FFCB6B;">MinimalPlugins</span><span style="color: #89DDFF;">);</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;"> 9</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">10</span><span style="color: #545454;font-style: italic;">    // create channel</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">11</span><span style="color: #C792EA;">    let</span><span> sender</span><span style="color: #89DDFF;"> =</span><span> app</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">add_channel_trigger</span><span style="color: #89DDFF;">::&lt;</span><span style="color: #FFCB6B;">MyEvent</span><span style="color: #89DDFF;">&gt;();</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">12</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">13</span><span style="color: #545454;font-style: italic;">    // use sender from anywhere:</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">14</span><span style="color: #FFCB6B;">    thread</span><span style="color: #89DDFF;">::</span><span style="color: #82AAFF;">spawn</span><span style="color: #89DDFF;">(</span><span style="color: #F78C6C;">move</span><span style="color: #89DDFF;"> || {</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">15</span><span style="color: #C792EA;">        let mut</span><span> counter</span><span style="color: #89DDFF;"> =</span><span style="color: #F78C6C;"> 1</span><span style="color: #89DDFF;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">16</span><span style="color: #89DDFF;font-style: italic;">        loop</span><span style="color: #89DDFF;"> {</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">17</span><span style="color: #545454;font-style: italic;">            // send events back to bevy</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">18</span><span>            sender</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">send</span><span style="color: #89DDFF;">(</span><span style="color: #82AAFF;">MyEvent</span><span style="color: #89DDFF;">(</span><span>counter</span><span style="color: #89DDFF;">));</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">19</span><span style="color: #FFCB6B;">            thread</span><span style="color: #89DDFF;">::</span><span style="color: #82AAFF;">sleep</span><span style="color: #89DDFF;">(</span><span style="color: #FFCB6B;">Duration</span><span style="color: #89DDFF;">::</span><span style="color: #82AAFF;">from_secs</span><span style="color: #89DDFF;">(</span><span style="color: #F78C6C;">1</span><span style="color: #89DDFF;">));</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">20</span><span>            counter</span><span style="color: #89DDFF;"> +=</span><span style="color: #F78C6C;"> 1</span><span style="color: #89DDFF;">;</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">21</span><span style="color: #89DDFF;">        }</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">22</span><span style="color: #89DDFF;">    });</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">23</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">24</span><span style="color: #545454;font-style: italic;">    // register an observer to receive the events sent via `sender`</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">25</span><span>    app</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">observe</span><span style="color: #89DDFF;">(</span><span>on_event</span><span style="color: #89DDFF;">);</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">26</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">27</span><span>    app</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">run</span><span style="color: #89DDFF;">();</span></span>
+<span class="giallo-l"><span aria-hidden="true" class="giallo-ln" style="color: #424242;">28</span><span style="color: #89DDFF;">}</span></span></code></pre>
 <p>For the purposes of this example we simulate this by spinning off a
 separate thread (line <strong>14</strong>) and passing <code>sender</code> into it. Since this is
 a multiple-producers-single-consumer channel we can clone the sender
@@ -88,17 +87,16 @@ We want Bevy systems to react to these Events.
 Therefore we register an observer (line <strong>25</strong>) that will trigger every
 time this event gets sent.</p>
 <p>Let's look at the code of the observer:</p>
-<pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">on_event</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">trigger</span><span style="color:#89ddff;">: </span><span>Trigger</span><span style="color:#89ddff;">&lt;</span><span>MyEvent</span><span style="color:#89ddff;">&gt;) {
-</span><span>    </span><span style="font-style:italic;color:#c792ea;">let</span><span> event </span><span style="color:#89ddff;">=</span><span> trigger</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">event</span><span style="color:#89ddff;">();
-</span><span>    info!</span><span style="color:#89ddff;">(&quot;</span><span style="color:#c3e88d;">trigger with: {}</span><span style="color:#89ddff;">&quot;,</span><span> event</span><span style="color:#89ddff;">.</span><span style="color:#f78c6c;">0</span><span style="color:#89ddff;">);
-</span><span style="color:#89ddff;">}
-</span></code></pre>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="rust"><span class="giallo-l"><span style="color: #F78C6C;">fn</span><span style="color: #82AAFF;"> on_event</span><span style="color: #89DDFF;">(</span><span>trigger</span><span style="color: #89DDFF;">:</span><span style="color: #FFCB6B;"> Trigger</span><span style="color: #89DDFF;">&lt;</span><span style="color: #FFCB6B;">MyEvent</span><span style="color: #89DDFF;">&gt;) {</span></span>
+<span class="giallo-l"><span style="color: #C792EA;">    let</span><span> event</span><span style="color: #89DDFF;"> =</span><span> trigger</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">event</span><span style="color: #89DDFF;">();</span></span>
+<span class="giallo-l"><span style="color: #82AAFF;">    info!</span><span style="color: #89DDFF;">(&quot;</span><span style="color: #C3E88D;">trigger with: </span><span style="color: #89DDFF;">{}&quot;,</span><span> event</span><span style="color: #89DDFF;">.</span><span style="color: #F78C6C;">0</span><span style="color: #89DDFF;">);</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">}</span></span></code></pre>
 <p>Thanks to <code>bevy_channel_trigger</code> we can react to these Events now just
 like we would with any other Observer. In this example we simply trace
 this to the console.</p>
 <blockquote>
 <p>You can find a more elaborate example in this
-<a href="https://github.com/rustunit/bevy_web_drop_image_as_sprite">drop images into bevy on the web</a> demo.</p>
+<a rel="external" href="https://github.com/rustunit/bevy_web_drop_image_as_sprite">drop images into bevy on the web</a> demo.</p>
 </blockquote>
 <h1 id="how-does-crossbeam-flume-and-others-compare">How does crossbeam, flume and others compare</h1>
 <p>You might be wondering why we chose to use <strong>crossbeam</strong> here under the hood.</p>
@@ -119,7 +117,7 @@ it pales in comparison to crossbeam in regards to maintenance.</p>
 We actually used this one before but it dates back to a time when the only messaging
 system Bevy had was <code>EventWriter</code>/<code>EventReader</code>. These matter as they are more performant in cases where you want to send massive amounts of events at the expense of slightly less ergonomic event handling.</p>
 <p><strong>But</strong> for our use cases events are used to cross the language barrier primarily and we want to have maximum ergonomics in how to write handlers for these using the new Observer API.</p>
-<p>Migration of using <code>bevy_channel_trigger</code> in our crates like <a href="https://github.com/rustunit/bevy_web_popups">bevy_web_popups</a> has already begun an will be finished with the migration to bevy 0.15!</p>
+<p>Migration of using <code>bevy_channel_trigger</code> in our crates like <a rel="external" href="https://github.com/rustunit/bevy_web_popups">bevy_web_popups</a> has already begun an will be finished with the migration to bevy 0.15!</p>
 <hr />
 <p>You need support building your Bevy or Rust project? Our team of experts can support you! <a href="https://rustunit.com/contact/">Contact us.</a></p>
 

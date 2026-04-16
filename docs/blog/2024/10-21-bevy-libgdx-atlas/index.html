@@ -34,7 +34,7 @@
         <p>A texture atlas (used synonymously for sprite atlas and sprite sheet in the following) is an old and well-established tool in our game-dev toolbox. This article helps you understand what they are, why they are useful, and how to use them in a Bevy project.</p>
 <h1 id="what-is-a-texture-atlas">What is a texture atlas?</h1>
 <p><a href="https://opengameart.org/content/dungeon-crawl-32x32-tiles" target="_blank"><img src="example-atlas.png" alt="example atlas" style="max-width: 40%" class="inline-img" /></a>
-You have most certainly seen texture atlases before when using asset kits like the one on the right (taken from <a href="https://opengameart.org/content/dungeon-crawl-32x32-tiles">opengameart.org</a>):</p>
+You have most certainly seen texture atlases before when using asset kits like the one on the right (taken from <a rel="external" href="https://opengameart.org/content/dungeon-crawl-32x32-tiles">opengameart.org</a>):</p>
 <p>They come in many different formats, arrangements, and sizes. Some are square, some are not. Often, everything is arranged in a regular grid, but it could also appear as if it is a tightly packed chaos, where sometimes items are even rotated to pack as closely as possible.</p>
 <p>Let's start with <em>why</em> we use them.</p>
 <blockquote>
@@ -45,111 +45,106 @@ You have most certainly seen texture atlases before when using asset kits like t
 <p>On hardware that only supports power-of-two textures using texture atlases allows you to reduce wasted memory. This is mostly an issue of the past unless you need to support arcane Adreno graphics chips (looking at you Android).</p>
 <h1 id="how-to-use-an-atlas-in-bevy">How to use an atlas in Bevy ?</h1>
 <p><img src="https://rustunit.com/blog/2024/10-21-bevy-libgdx-atlas/./gabe-idle-run.png" alt="character-animation" /></p>
-<p>If we have an atlas arranged in a uniform grid like the above character animation (taken from the Bevy <a href="https://github.com/bevyengine/bevy/blob/5c759a1be800209f537bea31d32b8ba7e966b0c1/assets/textures/rpg/chars/gabe/gabe-idle-run.png">assets</a>),
+<p>If we have an atlas arranged in a uniform grid like the above character animation (taken from the Bevy <a rel="external" href="https://github.com/bevyengine/bevy/blob/5c759a1be800209f537bea31d32b8ba7e966b0c1/assets/textures/rpg/chars/gabe/gabe-idle-run.png">assets</a>),
 then using such an atlas is quite easy right out of the box in Bevy:</p>
-<pre data-lang="rs" style="background-color:#212121;color:#eeffff;" class="language-rs "><code class="language-rs" data-lang="rs"><span style="font-style:italic;color:#c792ea;">let</span><span> texture_handle </span><span style="color:#89ddff;">=</span><span> asset_server</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">load</span><span style="color:#89ddff;">(&quot;</span><span style="color:#c3e88d;">textures/rpg/chars/gabe/gabe-idle-run.png</span><span style="color:#89ddff;">&quot;);
-</span><span style="font-style:italic;color:#c792ea;">let</span><span> texture_atlas </span><span style="color:#89ddff;">= </span><span>TextureAtlasLayout</span><span style="color:#89ddff;">::</span><span>from_grid</span><span style="color:#89ddff;">(</span><span>UVec2</span><span style="color:#89ddff;">::</span><span>splat</span><span style="color:#89ddff;">(</span><span style="color:#f78c6c;">24</span><span style="color:#89ddff;">), </span><span style="color:#f78c6c;">7</span><span style="color:#89ddff;">, </span><span style="color:#f78c6c;">1</span><span style="color:#89ddff;">, </span><span style="color:#ffcb6b;">None</span><span style="color:#89ddff;">, </span><span style="color:#ffcb6b;">None</span><span style="color:#89ddff;">);
-</span><span style="font-style:italic;color:#c792ea;">let</span><span> texture_atlas_handle </span><span style="color:#89ddff;">=</span><span> texture_atlases</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">add</span><span style="color:#89ddff;">(</span><span>texture_atlas</span><span style="color:#89ddff;">);
-</span><span>
-</span><span>commands</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">spawn</span><span style="color:#89ddff;">((
-</span><span>    ImageBundle </span><span style="color:#89ddff;">{
-</span><span>        </span><span style="font-style:italic;color:#4a4a4a;">//...
-</span><span>    </span><span style="color:#89ddff;">},
-</span><span>    TextureAtlas</span><span style="color:#89ddff;">::</span><span>from</span><span style="color:#89ddff;">(</span><span>texture_atlas_handle</span><span style="color:#89ddff;">),
-</span><span style="color:#89ddff;">));
-</span></code></pre>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="rust"><span class="giallo-l"><span style="color: #C792EA;">let</span><span> texture_handle</span><span style="color: #89DDFF;"> =</span><span> asset_server</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">load</span><span style="color: #89DDFF;">(&quot;</span><span style="color: #C3E88D;">textures/rpg/chars/gabe/gabe-idle-run.png</span><span style="color: #89DDFF;">&quot;);</span></span>
+<span class="giallo-l"><span style="color: #C792EA;">let</span><span> texture_atlas</span><span style="color: #89DDFF;"> =</span><span style="color: #FFCB6B;"> TextureAtlasLayout</span><span style="color: #89DDFF;">::</span><span style="color: #82AAFF;">from_grid</span><span style="color: #89DDFF;">(</span><span style="color: #FFCB6B;">UVec2</span><span style="color: #89DDFF;">::</span><span style="color: #82AAFF;">splat</span><span style="color: #89DDFF;">(</span><span style="color: #F78C6C;">24</span><span style="color: #89DDFF;">),</span><span style="color: #F78C6C;"> 7</span><span style="color: #89DDFF;">,</span><span style="color: #F78C6C;"> 1</span><span style="color: #89DDFF;">,</span><span style="color: #FFCB6B;"> None</span><span style="color: #89DDFF;">,</span><span style="color: #FFCB6B;"> None</span><span style="color: #89DDFF;">);</span></span>
+<span class="giallo-l"><span style="color: #C792EA;">let</span><span> texture_atlas_handle</span><span style="color: #89DDFF;"> =</span><span> texture_atlases</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">add</span><span style="color: #89DDFF;">(</span><span>texture_atlas</span><span style="color: #89DDFF;">);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>commands</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">spawn</span><span style="color: #89DDFF;">((</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">    ImageBundle</span><span style="color: #89DDFF;"> {</span></span>
+<span class="giallo-l"><span style="color: #545454;font-style: italic;">        //...</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">    },</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">    TextureAtlas</span><span style="color: #89DDFF;">::</span><span style="color: #82AAFF;">from</span><span style="color: #89DDFF;">(</span><span>texture_atlas_handle</span><span style="color: #89DDFF;">),</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">));</span></span></code></pre>
 <blockquote>
-<p>See this in action in this <a href="https://bevyengine.org/examples/ui-user-interface/ui-texture-atlas/">Bevy example</a></p>
+<p>See this in action in this <a rel="external" href="https://bevyengine.org/examples/ui-user-interface/ui-texture-atlas/">Bevy example</a></p>
 </blockquote>
 <p><em>Now how do we handle a texture atlas that is not arranged in a regular grid?</em></p>
 <p>Let's look at the definition of <code>TextureAtlasLayout</code>:</p>
-<pre data-lang="rs" style="background-color:#212121;color:#eeffff;" class="language-rs "><code class="language-rs" data-lang="rs"><span style="color:#c792ea;">pub </span><span style="font-style:italic;color:#c792ea;">struct </span><span>TextureAtlasLayout </span><span style="color:#89ddff;">{
-</span><span>    </span><span style="color:#c792ea;">pub </span><span>size</span><span style="color:#89ddff;">:</span><span> UVec2,
-</span><span>    </span><span style="color:#c792ea;">pub </span><span>textures</span><span style="color:#89ddff;">: </span><span style="color:#ffcb6b;">Vec</span><span style="color:#89ddff;">&lt;</span><span>URect</span><span style="color:#89ddff;">&gt;</span><span>,
-</span><span>    </span><span style="font-style:italic;color:#4a4a4a;">/* private fields */
-</span><span style="color:#89ddff;">}
-</span></code></pre>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="rust"><span class="giallo-l"><span style="color: #F78C6C;">pub</span><span style="color: #C792EA;"> struct</span><span style="color: #FFCB6B;"> TextureAtlasLayout</span><span style="color: #89DDFF;"> {</span></span>
+<span class="giallo-l"><span style="color: #F78C6C;">    pub</span><span> size</span><span style="color: #89DDFF;">:</span><span style="color: #FFCB6B;"> UVec2</span><span style="color: #89DDFF;">,</span></span>
+<span class="giallo-l"><span style="color: #F78C6C;">    pub</span><span> textures</span><span style="color: #89DDFF;">:</span><span style="color: #FFCB6B;"> Vec</span><span style="color: #89DDFF;">&lt;</span><span style="color: #FFCB6B;">URect</span><span style="color: #89DDFF;">&gt;,</span></span>
+<span class="giallo-l"><span style="color: #545454;font-style: italic;">    /* private fields */</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">}</span></span></code></pre>
 <p>So the answer is: we just need to somehow list all the different rects that can be used as an individual texture in this big atlas.</p>
 <p>This is where we have to figure out how to generate an atlas in the first place.</p>
 <h1 id="how-to-generate-an-atlas">How to generate an atlas?</h1>
 <p>There a two major ways to do this: <strong>offline</strong> and <strong>online</strong>.</p>
-<p><strong>Online</strong> means we combine textures at runtime into an atlas, for example when loading a level, choosing what textures will be needed and then combining them into a single texture atlas. Bevy supports doing that already using <a href="https://docs.rs/bevy/latest/bevy/prelude/struct.TextureAtlasBuilder.html">TextureAtlasBuilder</a>.</p>
+<p><strong>Online</strong> means we combine textures at runtime into an atlas, for example when loading a level, choosing what textures will be needed and then combining them into a single texture atlas. Bevy supports doing that already using <a rel="external" href="https://docs.rs/bevy/latest/bevy/prelude/struct.TextureAtlasBuilder.html">TextureAtlasBuilder</a>.</p>
 <p><strong>Offline</strong> means we want to author our texture atlas before shipping the game. This has the advantage of not having to pay the runtime costs of doing this. For assets where the use cases are clear this is obviously reducing loading times, CPU usage and peak memory usage on constraint platforms like mobile and web.</p>
 <p>In this article, we deal with the <strong>offline</strong> case.</p>
-<p>One mature tool that allows combining single textures into an atlas is <a href="https://github.com/crashinvaders/gdx-texture-packer-gui">gdx-texture-packer-gui</a> originally developed for <a href="https://libgdx.com">libgdx</a>.</p>
+<p>One mature tool that allows combining single textures into an atlas is <a rel="external" href="https://github.com/crashinvaders/gdx-texture-packer-gui">gdx-texture-packer-gui</a> originally developed for <a rel="external" href="https://libgdx.com">libgdx</a>.</p>
 <img src="flags.png" alt="gdx atlas packer GUI example" class="centered" style="max-width: 70%"/>
 <p>In the above screenshot you see the tool in action. We add a whole long list of source files on the left and the packer generates the packed texture on the right.</p>
 <p>It also generates an <code>atlas</code> file that looks like this:</p>
-<pre data-lang="atlas" style="background-color:#212121;color:#eeffff;" class="language-atlas "><code class="language-atlas" data-lang="atlas"><span>flags.png
-</span><span>size:1024,512
-</span><span>repeat:none
-</span><span>ae
-</span><span>bounds:684,126,60,60
-</span><span>ag
-</span><span>bounds:64,250,60,60
-</span><span>ai
-</span><span>bounds:374,250,60,60
-</span><span>am
-</span><span>bounds:932,436,60,60
-</span></code></pre>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="plain"><span class="giallo-l"><span>flags.png</span></span>
+<span class="giallo-l"><span>size:1024,512</span></span>
+<span class="giallo-l"><span>repeat:none</span></span>
+<span class="giallo-l"><span>ae</span></span>
+<span class="giallo-l"><span>bounds:684,126,60,60</span></span>
+<span class="giallo-l"><span>ag</span></span>
+<span class="giallo-l"><span>bounds:64,250,60,60</span></span>
+<span class="giallo-l"><span>ai</span></span>
+<span class="giallo-l"><span>bounds:374,250,60,60</span></span>
+<span class="giallo-l"><span>am</span></span>
+<span class="giallo-l"><span>bounds:932,436,60,60</span></span></code></pre>
 <p><em>This</em> is something we can have Bevy ingest as an <code>Asset</code>!</p>
 <h1 id="how-to-load-the-generated-libgdx-atlas-in-bevy">How to load the generated libgdx atlas in Bevy?</h1>
 <p>Bevy allows us to load custom asset formats by implementing the <code>AssetLoader</code> trait like this:</p>
-<pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#89ddff;">#[</span><span>derive</span><span style="color:#89ddff;">(</span><span>Default</span><span style="color:#89ddff;">)]
-</span><span style="font-style:italic;color:#c792ea;">struct </span><span>CustomAssetLoader</span><span style="color:#89ddff;">;
-</span><span style="font-style:italic;color:#c792ea;">impl </span><span>AssetLoader </span><span style="color:#c792ea;">for </span><span>CustomAssetLoader </span><span style="color:#89ddff;">{
-</span><span>    </span><span style="font-style:italic;color:#c792ea;">type </span><span>Asset </span><span style="color:#89ddff;">=</span><span> CustomAsset</span><span style="color:#89ddff;">;
-</span><span>    </span><span style="font-style:italic;color:#c792ea;">type </span><span>Settings </span><span style="color:#89ddff;">= ();
-</span><span>    </span><span style="font-style:italic;color:#c792ea;">type </span><span>Error </span><span style="color:#89ddff;">= ();
-</span><span>    
-</span><span>    async </span><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">load</span><span style="color:#89ddff;">&lt;</span><span style="color:#c792ea;">&#39;a</span><span style="color:#89ddff;">&gt;(
-</span><span>        </span><span style="color:#89ddff;">&amp;</span><span style="color:#c792ea;">&#39;a </span><span style="color:#f78c6c;">self</span><span>,
-</span><span>        </span><span style="color:#f78c6c;">reader</span><span style="color:#89ddff;">: &amp;</span><span style="color:#c792ea;">&#39;a mut </span><span>Reader</span><span style="color:#89ddff;">&lt;</span><span>&#39;</span><span style="color:#89ddff;">_&gt;</span><span>,
-</span><span>        </span><span style="color:#f78c6c;">_settings</span><span style="color:#89ddff;">: &amp;</span><span style="color:#c792ea;">&#39;a </span><span style="color:#89ddff;">()</span><span>,
-</span><span>        </span><span style="color:#f78c6c;">_load_context</span><span style="color:#89ddff;">: &amp;</span><span style="color:#c792ea;">&#39;a mut </span><span>LoadContext</span><span style="color:#89ddff;">&lt;</span><span>&#39;</span><span style="color:#89ddff;">_&gt;</span><span>,
-</span><span>    </span><span style="color:#89ddff;">) -&gt; </span><span style="color:#ffcb6b;">Result</span><span style="color:#89ddff;">&lt;</span><span style="font-style:italic;color:#c792ea;">Self</span><span style="font-style:italic;color:#89ddff;">::</span><span>Asset, </span><span style="font-style:italic;color:#c792ea;">Self</span><span style="font-style:italic;color:#89ddff;">::</span><span>Error</span><span style="color:#89ddff;">&gt; {
-</span><span>        </span><span style="font-style:italic;color:#c792ea;">let </span><span style="color:#c792ea;">mut</span><span> bytes </span><span style="color:#89ddff;">= </span><span style="color:#ffcb6b;">Vec</span><span style="color:#89ddff;">::</span><span>new</span><span style="color:#89ddff;">();
-</span><span>        reader</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">read_to_end</span><span style="color:#89ddff;">(&amp;</span><span style="color:#c792ea;">mut</span><span> bytes</span><span style="color:#89ddff;">).</span><span>await</span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">unwrap</span><span style="color:#89ddff;">();
-</span><span>        </span><span style="font-style:italic;color:#4a4a4a;">// load bytes from file here
-</span><span>        </span><span style="color:#ffcb6b;">Ok</span><span style="color:#89ddff;">(</span><span>CustomAsset</span><span style="color:#89ddff;">)
-</span><span>    </span><span style="color:#89ddff;">}
-</span><span>
-</span><span>    </span><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">extensions</span><span style="color:#89ddff;">(&amp;</span><span style="color:#f78c6c;">self</span><span style="color:#89ddff;">) -&gt; &amp;[&amp;</span><span style="font-style:italic;color:#c792ea;">str</span><span style="color:#89ddff;">] {
-</span><span>        </span><span style="color:#89ddff;">&amp;[&quot;</span><span style="color:#c3e88d;">custom</span><span style="color:#89ddff;">&quot;]
-</span><span>    </span><span style="color:#89ddff;">}
-</span><span style="color:#89ddff;">}
-</span><span>
-</span><span style="font-style:italic;color:#c792ea;">fn </span><span style="color:#82aaff;">main</span><span style="color:#89ddff;">() {
-</span><span>    App</span><span style="color:#89ddff;">::</span><span>new</span><span style="color:#89ddff;">()
-</span><span>        </span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">add_plugins</span><span style="color:#89ddff;">(</span><span>DefaultPlugins</span><span style="color:#89ddff;">)
-</span><span>        </span><span style="color:#89ddff;">.</span><span>init_asset</span><span style="color:#89ddff;">::&lt;</span><span>CustomAsset</span><span style="color:#89ddff;">&gt;()
-</span><span>        </span><span style="color:#89ddff;">.</span><span>init_asset_loader</span><span style="color:#89ddff;">::&lt;</span><span>CustomAssetLoader</span><span style="color:#89ddff;">&gt;()
-</span><span>        </span><span style="color:#89ddff;">.</span><span style="color:#82aaff;">run</span><span style="color:#89ddff;">();
-</span><span style="color:#89ddff;">}
-</span></code></pre>
-<p>This snippet above leaves out how to parse the file format we have seen above but it illustrates how easy it is to register a custom asset loader for files with the extension <code>.custom</code>. Find the full example provided on the <a href="https://bevyengine.org/examples/assets/custom-asset/">Bevy website</a>.</p>
-<p>We implemented a custom asset loader for the libgdx atlas format in the <a href="https://github.com/rustunit/bevy_libgdx_atlas">bevy_libgdx_atlas</a> crate. The asset itself looks like this:</p>
-<pre data-lang="rust" style="background-color:#212121;color:#eeffff;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#c792ea;">pub </span><span style="font-style:italic;color:#c792ea;">struct </span><span>LibGdxAtlasAsset </span><span style="color:#89ddff;">{
-</span><span>    </span><span style="font-style:italic;color:#4a4a4a;">/// The texture atlas image.
-</span><span>    </span><span style="color:#c792ea;">pub </span><span>image</span><span style="color:#89ddff;">: </span><span>Handle</span><span style="color:#89ddff;">&lt;</span><span>Image</span><span style="color:#89ddff;">&gt;</span><span>,
-</span><span>    </span><span style="font-style:italic;color:#4a4a4a;">/// The texture atlas layout.
-</span><span>    </span><span style="color:#c792ea;">pub </span><span>atlas</span><span style="color:#89ddff;">: </span><span>Handle</span><span style="color:#89ddff;">&lt;</span><span>TextureAtlasLayout</span><span style="color:#89ddff;">&gt;</span><span>,
-</span><span>    </span><span style="font-style:italic;color:#4a4a4a;">/// The map of the original file names to indices of the texture atlas.
-</span><span>    </span><span style="color:#c792ea;">pub </span><span>files</span><span style="color:#89ddff;">: </span><span>HashMap</span><span style="color:#89ddff;">&lt;</span><span style="color:#ffcb6b;">String</span><span>, </span><span style="font-style:italic;color:#c792ea;">usize</span><span style="color:#89ddff;">&gt;</span><span>,
-</span><span style="color:#89ddff;">}
-</span></code></pre>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="rust"><span class="giallo-l"><span style="color: #89DDFF;">#[</span><span>derive</span><span style="color: #89DDFF;">(</span><span style="color: #FFCB6B;">Default</span><span style="color: #89DDFF;">)]</span></span>
+<span class="giallo-l"><span style="color: #C792EA;">struct</span><span style="color: #FFCB6B;"> CustomAssetLoader</span><span style="color: #89DDFF;">;</span></span>
+<span class="giallo-l"><span style="color: #F78C6C;">impl</span><span style="color: #FFCB6B;"> AssetLoader</span><span style="color: #89DDFF;font-style: italic;"> for</span><span style="color: #FFCB6B;"> CustomAssetLoader</span><span style="color: #89DDFF;"> {</span></span>
+<span class="giallo-l"><span style="color: #C792EA;">    type</span><span style="color: #FFCB6B;"> Asset</span><span style="color: #89DDFF;"> =</span><span style="color: #FFCB6B;"> CustomAsset</span><span style="color: #89DDFF;">;</span></span>
+<span class="giallo-l"><span style="color: #C792EA;">    type</span><span style="color: #FFCB6B;"> Settings</span><span style="color: #89DDFF;"> = ();</span></span>
+<span class="giallo-l"><span style="color: #C792EA;">    type</span><span style="color: #FFCB6B;"> Error</span><span style="color: #89DDFF;"> = ();</span></span>
+<span class="giallo-l"><span>    </span></span>
+<span class="giallo-l"><span style="color: #F78C6C;">    async fn</span><span style="color: #82AAFF;"> load</span><span style="color: #89DDFF;">&lt;&#39;</span><span style="color: #FFCB6B;">a</span><span style="color: #89DDFF;">&gt;(</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">        &amp;&#39;</span><span style="color: #FFCB6B;">a</span><span> self</span><span style="color: #89DDFF;">,</span></span>
+<span class="giallo-l"><span>        reader</span><span style="color: #89DDFF;">: &amp;&#39;</span><span style="color: #FFCB6B;">a</span><span style="color: #C792EA;"> mut</span><span style="color: #FFCB6B;"> Reader</span><span style="color: #89DDFF;">&lt;&#39;</span><span style="color: #FFCB6B;">_</span><span style="color: #89DDFF;">&gt;,</span></span>
+<span class="giallo-l"><span>        _settings</span><span style="color: #89DDFF;">: &amp;&#39;</span><span style="color: #FFCB6B;">a</span><span style="color: #89DDFF;"> (),</span></span>
+<span class="giallo-l"><span>        _load_context</span><span style="color: #89DDFF;">: &amp;&#39;</span><span style="color: #FFCB6B;">a</span><span style="color: #C792EA;"> mut</span><span style="color: #FFCB6B;"> LoadContext</span><span style="color: #89DDFF;">&lt;&#39;</span><span style="color: #FFCB6B;">_</span><span style="color: #89DDFF;">&gt;,</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">    ) -&gt;</span><span style="color: #FFCB6B;"> Result</span><span style="color: #89DDFF;">&lt;</span><span>Self</span><span style="color: #89DDFF;">::</span><span style="color: #FFCB6B;">Asset</span><span style="color: #89DDFF;">,</span><span> Self</span><span style="color: #89DDFF;">::</span><span style="color: #FFCB6B;">Error</span><span style="color: #89DDFF;">&gt; {</span></span>
+<span class="giallo-l"><span style="color: #C792EA;">        let mut</span><span> bytes</span><span style="color: #89DDFF;"> =</span><span style="color: #FFCB6B;"> Vec</span><span style="color: #89DDFF;">::</span><span style="color: #82AAFF;">new</span><span style="color: #89DDFF;">();</span></span>
+<span class="giallo-l"><span>        reader</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">read_to_end</span><span style="color: #89DDFF;">(&amp;</span><span style="color: #C792EA;">mut</span><span> bytes</span><span style="color: #89DDFF;">).</span><span style="color: #89DDFF;font-style: italic;">await</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">unwrap</span><span style="color: #89DDFF;">();</span></span>
+<span class="giallo-l"><span style="color: #545454;font-style: italic;">        // load bytes from file here</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">        Ok</span><span style="color: #89DDFF;">(</span><span style="color: #FFCB6B;">CustomAsset</span><span style="color: #89DDFF;">)</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">    }</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #F78C6C;">    fn</span><span style="color: #82AAFF;"> extensions</span><span style="color: #89DDFF;">(&amp;</span><span>self</span><span style="color: #89DDFF;">) -&gt; &amp;[&amp;</span><span style="color: #FFCB6B;">str</span><span style="color: #89DDFF;">] {</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">        &amp;[&quot;</span><span style="color: #C3E88D;">custom</span><span style="color: #89DDFF;">&quot;]</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">    }</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">}</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #F78C6C;">fn</span><span style="color: #82AAFF;"> main</span><span style="color: #89DDFF;">() {</span></span>
+<span class="giallo-l"><span style="color: #FFCB6B;">    App</span><span style="color: #89DDFF;">::</span><span style="color: #82AAFF;">new</span><span style="color: #89DDFF;">()</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">        .</span><span style="color: #82AAFF;">add_plugins</span><span style="color: #89DDFF;">(</span><span style="color: #FFCB6B;">DefaultPlugins</span><span style="color: #89DDFF;">)</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">        .</span><span style="color: #82AAFF;">init_asset</span><span style="color: #89DDFF;">::&lt;</span><span style="color: #FFCB6B;">CustomAsset</span><span style="color: #89DDFF;">&gt;()</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">        .</span><span style="color: #82AAFF;">init_asset_loader</span><span style="color: #89DDFF;">::&lt;</span><span style="color: #FFCB6B;">CustomAssetLoader</span><span style="color: #89DDFF;">&gt;()</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">        .</span><span style="color: #82AAFF;">run</span><span style="color: #89DDFF;">();</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">}</span></span></code></pre>
+<p>This snippet above leaves out how to parse the file format we have seen above but it illustrates how easy it is to register a custom asset loader for files with the extension <code>.custom</code>. Find the full example provided on the <a rel="external" href="https://bevyengine.org/examples/assets/custom-asset/">Bevy website</a>.</p>
+<p>We implemented a custom asset loader for the libgdx atlas format in the <a rel="external" href="https://github.com/rustunit/bevy_libgdx_atlas">bevy_libgdx_atlas</a> crate. The asset itself looks like this:</p>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="rust"><span class="giallo-l"><span style="color: #F78C6C;">pub</span><span style="color: #C792EA;"> struct</span><span style="color: #FFCB6B;"> LibGdxAtlasAsset</span><span style="color: #89DDFF;"> {</span></span>
+<span class="giallo-l"><span style="color: #545454;font-style: italic;">    /// The texture atlas image.</span></span>
+<span class="giallo-l"><span style="color: #F78C6C;">    pub</span><span> image</span><span style="color: #89DDFF;">:</span><span style="color: #FFCB6B;"> Handle</span><span style="color: #89DDFF;">&lt;</span><span style="color: #FFCB6B;">Image</span><span style="color: #89DDFF;">&gt;,</span></span>
+<span class="giallo-l"><span style="color: #545454;font-style: italic;">    /// The texture atlas layout.</span></span>
+<span class="giallo-l"><span style="color: #F78C6C;">    pub</span><span> atlas</span><span style="color: #89DDFF;">:</span><span style="color: #FFCB6B;"> Handle</span><span style="color: #89DDFF;">&lt;</span><span style="color: #FFCB6B;">TextureAtlasLayout</span><span style="color: #89DDFF;">&gt;,</span></span>
+<span class="giallo-l"><span style="color: #545454;font-style: italic;">    /// The map of the original file names to indices of the texture atlas.</span></span>
+<span class="giallo-l"><span style="color: #F78C6C;">    pub</span><span> files</span><span style="color: #89DDFF;">:</span><span style="color: #FFCB6B;"> HashMap</span><span style="color: #89DDFF;">&lt;</span><span style="color: #FFCB6B;">String</span><span style="color: #89DDFF;">,</span><span style="color: #FFCB6B;"> usize</span><span style="color: #89DDFF;">&gt;,</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">}</span></span></code></pre>
 <p>Now this allows us to lookup the original texture (like <code>us.png</code>) inside the <code>files</code> hashmap and use the associated index to set the texture used from the <code>TextureAtlasLayout</code> (remember the <code>textures</code> vector with the right bounds of the sprite?).</p>
 <blockquote>
-<p>Find a full example of how to use <code>bevy_libgdx_atlas</code> in the <a href="https://github.com/rustunit/bevy_libgdx_atlas/blob/main/examples/animation.rs">repo's example</a>.</p>
+<p>Find a full example of how to use <code>bevy_libgdx_atlas</code> in the <a rel="external" href="https://github.com/rustunit/bevy_libgdx_atlas/blob/main/examples/animation.rs">repo's example</a>.</p>
 </blockquote>
 <h1 id="further-thoughts">Further Thoughts</h1>
-<p>Bevy at some point will feature an extendable editor and then we can build something like Unity's <a href="https://docs.unity3d.com/Manual/sprite/atlas/workflow/optimize-sprite-atlas-usage-size-improved-performance.html">SpriteAtlas</a> feature which will allow us to include the functionality of <code>gdx-texture-packer-gui</code> right into the Bevy editor.</p>
+<p>Bevy at some point will feature an extendable editor and then we can build something like Unity's <a rel="external" href="https://docs.unity3d.com/Manual/sprite/atlas/workflow/optimize-sprite-atlas-usage-size-improved-performance.html">SpriteAtlas</a> feature which will allow us to include the functionality of <code>gdx-texture-packer-gui</code> right into the Bevy editor.</p>
 <p>And if I may dream maybe we can even replicate the comfort of Unity allowing us to reference the original sprites in the editor and then under the hood adapt the references to use the regions inside the generated sprite atlas. <em>dreaming</em></p>
 <h1 id="tldr">TL;DR</h1>
-<p>We developed and published <a href="https://github.com/rustunit/bevy_libgdx_atlas">bevy_libgdx_atlas</a>
+<p>We developed and published <a rel="external" href="https://github.com/rustunit/bevy_libgdx_atlas">bevy_libgdx_atlas</a>
 so everyone can just generate texture atlases using the libgdx format
-and <a href="https://github.com/crashinvaders/gdx-texture-packer-gui">GUI tool</a> inside Bevy projects.</p>
-<p>Find the flags example in action in our game <a href="https://tinytakeoff.com">tinytakeoff.com</a>:</p>
+and <a rel="external" href="https://github.com/crashinvaders/gdx-texture-packer-gui">GUI tool</a> inside Bevy projects.</p>
+<p>Find the flags example in action in our game <a rel="external" href="https://tinytakeoff.com">tinytakeoff.com</a>:</p>
 <p><a href="https://tinytakeoff.com" target="_blank"><img src="tiny.png" alt="tinytakeoff flags example" style="max-width: 30%" class="centered bordered" /></a></p>
 <p>You need support building your Bevy or Rust project? Our team of experts can support you! <a href="https://rustunit.com/contact/">Contact us.</a></p>
 

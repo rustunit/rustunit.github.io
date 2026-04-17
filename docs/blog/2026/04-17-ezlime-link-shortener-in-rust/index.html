@@ -27,13 +27,12 @@
 <div id="blogpage">
     <div class="date">2026-04-17</div>
     
-    <div class="hidden">hidden</div>
-    
     <h1 class="title">
         Building ezli.me, a link shortener in Rust
     </h1>
     <div class="content">
-        <p>In this short post we introduce <a rel="external" href="https://github.com/rustunit/ezlime">ezlime</a>, the small Rust service behind <a rel="external" href="https://ezli.me">ezli.me</a>.</p>
+        <img src="/blog/2026/04-17-ezlime-link-shortener-in-rust/ezlime-website.png" alt="ezlime website" class="inline-img" style="max-width: 50%"/>
+<p>In this short post we introduce <a rel="external" href="https://github.com/rustunit/ezlime">ezlime</a>, the small Rust service behind <a rel="external" href="https://ezli.me">ezli.me</a>.</p>
 <h1 id="why-we-built-this">Why we built this</h1>
 <p>We built it for a pretty boring reason. On <a rel="external" href="https://www.live-ask.com">Live-Ask.com</a> we used <a rel="external" href="https://tinyurl.com">TinyURL</a> to shorten event links, and after they tightened their free tier we were about to outgrow it.</p>
 <p>Paying for another SaaS plan would have solved that. But we already run a small K3s cluster with spare capacity, so at that point the question became: how much software do we actually need to redirect a URL?</p>

@@ -3,9 +3,10 @@ title = "Building ezli.me, a link shortener in Rust"
 date = 2026-04-17
 [extra]
 tags = ["rust","web","infra"]
-hidden = true
 custom_summary = "A small Rust link shortener with PostgreSQL, in-memory caching and batched click writes."
 +++
+
+<img src="/blog/2026/04-17-ezlime-link-shortener-in-rust/ezlime-website.png" alt="ezlime website" class="inline-img" style="max-width: 50%"/>
 
 In this short post we introduce [ezlime](https://github.com/rustunit/ezlime), the small Rust service behind [ezli.me](https://ezli.me).
 

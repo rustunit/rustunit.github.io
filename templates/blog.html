@@ -4,8 +4,9 @@
 <div id="blog">
     <h1>Blog</h1>
     <div class="posts">
+        {% set show_hidden = get_env(name="ZOLA_SERVE", default="") == "1" %}
         {% for page in section.pages %}
-        {% if not page.extra.hidden %}
+        {% if show_hidden or not page.extra.hidden %}
         <div class="post">
             <div class="date">{{ page.date }}</div>
             <a href="{{ page.permalink | safe }}">

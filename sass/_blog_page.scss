@@ -2,9 +2,9 @@
     margin-top: 20px;
 
     code {
-        color: #c4c4c4;
+        color: #b5b5b5;
         font-weight: bold;
-        font-size: 12px;
+        font-size: 14px;
 
         span {
             font-weight: normal;
@@ -110,6 +110,10 @@
             margin: 15px;
             border-radius: 15px;
             box-shadow: 2px 2px 10px #0000008f;
+        }
+
+        pre {
+            border-radius: 15px;
         }
     }
 }

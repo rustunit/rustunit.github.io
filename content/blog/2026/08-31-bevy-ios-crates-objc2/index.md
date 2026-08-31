@@ -35,6 +35,10 @@ They all had the same downsides:
 
 All of it is now [objc2](https://github.com/madsmtm/objc2) and its generated framework bindings: `objc2-ui-kit`, `objc2-user-notifications`, `objc2-game-kit` and `objc2-store-kit`. Apple's frameworks are Objective-C anyway, and unlike Swift, Objective-C has a dynamic runtime you can bind against generically: selectors, type encodings, `objc_msgSend`. That is what objc2 does for us under the hood, once, for every framework. The bridge is a dependency now instead of a second thing we ship.
 
+<a href="https://www.youtube.com/watch?v=wv76dB2yATk"><img src="mads-talk.png" alt="Mads Marquart: Bevy on iOS - in pure Rust" style="width: 40%; max-width: 400px" class="inline-img" /></a>
+
+Mads Marquart, who maintains objc2, gave a talk about exactly this at our [Bevy Meetup #13](/bevy-meetup/bevy-meetup-13/#mads-marquart): *Bevy on iOS - in pure Rust*. Well worth a watch.
+
 Our existing [bevy_ios_app_delegate](https://github.com/rustunit/bevy_ios_app_delegate) crate was built that way already. Now all the other crates are too.
 
 > Our previous post on iOS deep-linking goes into detail on `bevy_ios_app_delegate` and what objc2 does for us there. You can find it [here](@/blog/2025/05-18-bevy-ios-deep-linking/index.md).

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>rustunit</title>
+    <meta name="description" content="Rustunit offers software development consulting with a focus on rust, game-development and large scale distributed backend services.">
+
+    <link rel="stylesheet" href="https://rustunit.com/fonts.css">
+    <link rel="stylesheet" href="https://rustunit.com/style.css">
+
+    <script src="https://cdn.usefathom.com/script.js" data-site="TSUIPVAW" defer></script>
+</head>
+
+<body>
+    <header>
+        <a href="https://rustunit.com/">HOME</a>
+        <a href="https://rustunit.com/#apps">APPS</a>
+        <a href="https://rustunit.com/#projects">PROJECTS</a>
+        <a href="https://rustunit.com/bevy-meetup/" style="white-space:nowrap">BEVY MEETUP</a>
+        <a href="https://rustunit.com/blog/">BLOG</a>
+        <a href="https://rustunit.com/contact/">CONTACT</a>
+    </header>
+    
+<div id="blogpage">
+    <div class="date">2026-08-31</div>
+    
+    <div class="hidden">hidden</div>
+    
+    <h1 class="title">
+        Dropping Swift from our Bevy iOS crates
+    </h1>
+    <div class="content">
+        <p>In this short post we look at how we got rid of the Swift packages in our <a rel="external" href="https://github.com/rustunit">bevy_ios_*</a> crates.</p>
+<p>Most of them we used to ship in a tandem: a Rust crate on <a rel="external" href="https://crates.io">crates.io</a> and a Swift package that you had to add to your xcode project via SPM. Over the last weeks we released them again, this time without that second half.</p>
+<p>Installing them is now just <code>cargo add</code>.</p>
+<h1 id="why">Why?</h1>
+<p>The language barrier itself did not go anywhere, we still cross it on every call. What changed is that we do not have to build and ship that crossing ourselves anymore.</p>
+<p>The platform side lived in that package, written in Swift or Objective-C, and rust could only reach into it through C symbols. So every crate came with its own hand-written bridge and over the years we ended up with four different ones:</p>
+<ul>
+<li><code>bevy_ios_safearea</code>: Swift functions exported as C symbols via <code>@_cdecl</code></li>
+<li><code>bevy_ios_alerts</code> and <code>bevy_ios_review</code>: hand-written Objective-C behind a C header</li>
+<li><code>bevy_ios_notifications</code>: protobuf messages serialized across the C ABI</li>
+<li><code>bevy_ios_gamecenter</code> and <code>bevy_ios_iap</code>: <a rel="external" href="https://github.com/chinedufn/swift-bridge">swift-bridge</a> plus a prebuilt <code>.xcframework</code></li>
+</ul>
+<p>They all had the same downsides:</p>
+<ul>
+<li>every one of our READMEs started with the xcode step of adding the SPM package, screenshot included</li>
+<li>the crate version and the package version had to match, that is why our install instructions said things like <code>bevy_ios_gamecenter = { version = "=0.6.0" }</code>. Get it wrong and you find out at link time.</li>
+<li>the swift-bridge crates also needed CI to build an <code>.xcframework</code>, zip it, hash it and attach it to a GitHub release on every version</li>
+<li>no simulator builds, <code>swift-bridge</code> pulls in <code>rust-bindgen</code> which broke <code>aarch64-apple-ios-sim</code> for us</li>
+</ul>
+<h1 id="what-replaced-it">What replaced it</h1>
+<p>All of it is now <a rel="external" href="https://github.com/madsmtm/objc2">objc2</a> and its generated framework bindings: <code>objc2-ui-kit</code>, <code>objc2-user-notifications</code>, <code>objc2-game-kit</code> and <code>objc2-store-kit</code>. Apple's frameworks are Objective-C anyway, and unlike Swift, Objective-C has a dynamic runtime you can bind against generically: selectors, type encodings, <code>objc_msgSend</code>. That is what objc2 does for us under the hood, once, for every framework. The bridge is a dependency now instead of a second thing we ship.</p>
+<p><a href="https://www.youtube.com/watch?v=wv76dB2yATk"><img src="mads-talk.png" alt="Mads Marquart: Bevy on iOS - in pure Rust" style="width: 40%; max-width: 400px" class="inline-img" /></a></p>
+<p>Mads Marquart, who maintains objc2, gave a talk about exactly this at our <a href="/bevy-meetup/bevy-meetup-13/#mads-marquart">Bevy Meetup #13</a>: <em>Bevy on iOS - in pure Rust</em>. Well worth a watch.</p>
+<p>Our existing <a rel="external" href="https://github.com/rustunit/bevy_ios_app_delegate">bevy_ios_app_delegate</a> crate was built that way already. Now all the other crates are too.</p>
+<blockquote>
+<p>Our previous post on iOS deep-linking goes into detail on <code>bevy_ios_app_delegate</code> and what objc2 does for us there. You can find it <a href="https://rustunit.com/blog/2025/05-18-bevy-ios-deep-linking/">here</a>.</p>
+</blockquote>
+<p>Lets look at the smallest crate first. <code>bevy_ios_safearea</code> used to be four Swift functions like this one:</p>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="swift"><span class="giallo-l"><span style="color: #89DDFF;">@</span><span style="color: #C792EA;">_cdecl</span><span style="color: #89DDFF;">(&quot;</span><span style="color: #C3E88D;">swift_safearea_top</span><span style="color: #89DDFF;">&quot;)</span></span>
+<span class="giallo-l"><span style="color: #F78C6C;">public</span><span style="color: #C792EA;"> func</span><span style="color: #82AAFF;"> safeareaTop</span><span style="color: #89DDFF;">(</span><span style="color: #82AAFF;font-style: italic;">view</span><span>: </span><span style="color: #FFCB6B;">UnsafeRawPointer</span><span style="color: #89DDFF;">) -&gt;</span><span style="color: #FFCB6B;"> Float32</span><span style="color: #89DDFF;"> {</span></span>
+<span class="giallo-l"><span style="color: #F78C6C;">    let</span><span> view </span><span style="color: #89DDFF;">=</span><span style="color: #FFCB6B;"> Unmanaged</span><span style="color: #89DDFF;">&lt;</span><span>UIView</span><span style="color: #89DDFF;">&gt;</span><span>.</span><span style="color: #82AAFF;">fromOpaque</span><span style="color: #89DDFF;">(</span><span>view</span><span style="color: #89DDFF;">)</span><span>.</span><span style="color: #82AAFF;">takeUnretainedValue</span><span style="color: #89DDFF;">()</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;font-style: italic;">    return</span><span style="color: #FFCB6B;"> Float32</span><span style="color: #89DDFF;">(</span><span>view.safeAreaInsets.top</span><span style="color: #89DDFF;">)</span><span>;</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">}</span></span>
+<span class="giallo-l"><span style="color: #545454;font-style: italic;">// ... and three more for bottom, left, right</span></span></code></pre>
+<p>plus their <code>extern "C"</code> declarations on the rust side, plus a <code>Package.swift</code>, plus the SPM step in your project. Today this is all it takes:</p>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="rust"><span class="giallo-l"><span style="color: #F78C6C;">use</span><span style="color: #FFCB6B;"> objc2_ui_kit</span><span style="color: #89DDFF;">::</span><span style="color: #FFCB6B;">UIView</span><span style="color: #89DDFF;">;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #C792EA;">let</span><span> view</span><span style="color: #89DDFF;">: &amp;</span><span style="color: #FFCB6B;">UIView</span><span style="color: #89DDFF;"> =</span><span style="color: #F78C6C;"> unsafe</span><span style="color: #89DDFF;"> { &amp;*</span><span>ui_view</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">cast</span><span style="color: #89DDFF;">::&lt;</span><span style="color: #FFCB6B;">UIView</span><span style="color: #89DDFF;">&gt;() };</span></span>
+<span class="giallo-l"><span style="color: #C792EA;">let</span><span> raw</span><span style="color: #89DDFF;"> =</span><span> view</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">safeAreaInsets</span><span style="color: #89DDFF;">();</span></span></code></pre><h1 id="how-does-the-platform-call-us-back">How does the platform call us back?</h1>
+<p>So far this is just rust calling into the platform. The other direction is what most of the protobuf and swift-bridge machinery was there for.</p>
+<p>With objc2 we can define an Objective-C class in rust and hand it to UIKit as a delegate:</p>
+<pre class="giallo" style="color: #EEFFFF; background-color: #212121;"><code data-lang="rust"><span class="giallo-l"><span style="color: #82AAFF;">define_class!</span><span style="color: #89DDFF;">(</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">    #[</span><span style="color: #F78C6C;">unsafe</span><span style="color: #89DDFF;">(</span><span>super</span><span style="color: #89DDFF;">(</span><span style="color: #FFCB6B;">NSObject</span><span style="color: #89DDFF;">))]</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">    #[</span><span>name </span><span style="color: #89DDFF;">= &quot;</span><span style="color: #C3E88D;">BevyIosNotificationsDelegate</span><span style="color: #89DDFF;">&quot;]</span></span>
+<span class="giallo-l"><span style="color: #C792EA;">    struct</span><span style="color: #FFCB6B;"> Delegate</span><span style="color: #89DDFF;">;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #F78C6C;">    unsafe impl</span><span style="color: #FFCB6B;"> UNUserNotificationCenterDelegate</span><span style="color: #89DDFF;font-style: italic;"> for</span><span style="color: #FFCB6B;"> Delegate</span><span style="color: #89DDFF;"> {</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">        #[</span><span style="color: #F78C6C;">unsafe</span><span style="color: #89DDFF;">(</span><span>method</span><span style="color: #89DDFF;">(</span><span>userNotificationCenter</span><span style="color: #89DDFF;">:</span><span>willPresentNotification</span><span style="color: #89DDFF;">:</span><span>withCompletionHandler</span><span style="color: #89DDFF;">:))]</span></span>
+<span class="giallo-l"><span style="color: #F78C6C;">        fn</span><span style="color: #82AAFF;"> will_present</span><span style="color: #89DDFF;">(</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">            &amp;</span><span>self</span><span style="color: #89DDFF;">,</span></span>
+<span class="giallo-l"><span>            _center</span><span style="color: #89DDFF;">: &amp;</span><span style="color: #FFCB6B;">UNUserNotificationCenter</span><span style="color: #89DDFF;">,</span></span>
+<span class="giallo-l"><span>            notification</span><span style="color: #89DDFF;">: &amp;</span><span style="color: #FFCB6B;">UNNotification</span><span style="color: #89DDFF;">,</span></span>
+<span class="giallo-l"><span>            completion_handler</span><span style="color: #89DDFF;">: &amp;</span><span style="color: #FFCB6B;">DynBlock</span><span style="color: #89DDFF;">&lt;</span><span style="color: #F78C6C;">dyn</span><span style="color: #FFCB6B;"> Fn</span><span style="color: #89DDFF;">(</span><span style="color: #FFCB6B;">UNNotificationPresentationOptions</span><span style="color: #89DDFF;">)&gt;,</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">        ) {</span></span>
+<span class="giallo-l"><span style="color: #82AAFF;">            send_event</span><span style="color: #89DDFF;">(</span><span style="color: #FFCB6B;">IosNotificationEvents</span><span style="color: #89DDFF;">::</span><span style="color: #82AAFF;">NotificationTriggered</span><span style="color: #89DDFF;">(</span></span>
+<span class="giallo-l"><span>                notification</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">request</span><span style="color: #89DDFF;">().</span><span style="color: #82AAFF;">identifier</span><span style="color: #89DDFF;">().</span><span style="color: #82AAFF;">to_string</span><span style="color: #89DDFF;">(),</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">            ));</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #C792EA;">            let</span><span> options</span><span style="color: #89DDFF;"> =</span><span style="color: #FFCB6B;"> UNNotificationPresentationOptions</span><span style="color: #89DDFF;">::</span><span style="color: #FFCB6B;">Banner</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">                |</span><span style="color: #FFCB6B;"> UNNotificationPresentationOptions</span><span style="color: #89DDFF;">::</span><span style="color: #FFCB6B;">List</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">                |</span><span style="color: #FFCB6B;"> UNNotificationPresentationOptions</span><span style="color: #89DDFF;">::</span><span style="color: #FFCB6B;">Badge</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">                |</span><span style="color: #FFCB6B;"> UNNotificationPresentationOptions</span><span style="color: #89DDFF;">::</span><span style="color: #FFCB6B;">Sound</span><span style="color: #89DDFF;">;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>            completion_handler</span><span style="color: #89DDFF;">.</span><span style="color: #82AAFF;">call</span><span style="color: #89DDFF;">((</span><span>options</span><span style="color: #89DDFF;">,));</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">        }</span></span>
+<span class="giallo-l"><span style="color: #545454;font-style: italic;">        // ...</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">    }</span></span>
+<span class="giallo-l"><span style="color: #89DDFF;">);</span></span></code></pre>
+<p>The delegate above sends the Event off and calls the completion handler. <code>send_event</code> is our own little helper on top of <a rel="external" href="https://github.com/rustunit/bevy_channel_message">bevy_channel_message</a>, it grabs the sender that our plugin put in place when it was built. So our Events end up in Bevy just like <a href="https://rustunit.com/blog/2024/11-15-bevy-channel-trigger/">before</a>.</p>
+<p>All in all we deleted 2809 lines from <code>bevy_ios_notifications</code>, 1615 of them a single generated <code>Data.pb.swift</code> file. <code>bevy_ios_gamecenter</code> lost 4430 lines!</p>
+<p>Remember the push notification token from the deep-linking post? It is done now.</p>
+<p>Those tokens are only handed to the <code>UIApplicationDelegate</code>, so instead of swizzling from Swift we add those two callbacks to whatever delegate the app has and install our own if there is none. If <code>bevy_ios_app_delegate</code> already set one up we hook into that one.</p>
+<h1 id="what-changes-for-you">What changes for you</h1>
+<p>You don't have to add an SPM package anymore, no linking <code>GameKit</code> or <code>StoreKit</code> by hand and no screenshots in the README. There is just one version left to get right instead of two.</p>
+<p>And <code>bevy_ios_gamecenter</code> and <code>bevy_ios_iap</code> build for the simulator again.</p>
+<h1 id="what-about-storekit-2">What about StoreKit 2?</h1>
+<p><code>bevy_ios_iap</code> is the one exception. StoreKit 2 is Swift only, there is no Objective-C runtime for objc2 to bind against, so here we are back to writing the bridge ourselves.</p>
+<p>So this crate keeps a small Swift shim. But that shim now lives inside the crate: <code>build.rs</code> compiles it with <code>swiftc</code> and links it statically.</p>
+<blockquote>
+<p>The two sides talk over a hand-written C ABI carrying JSON.</p>
+</blockquote>
+<p>Not pretty, but you still just <code>cargo add bevy_ios_iap</code> - no SPM package, no <code>.xcframework</code> release. This one is on <code>main</code> and not released yet.</p>
+<h1 id="releases">Releases</h1>
+<table><thead><tr><th>crate</th><th>version</th></tr></thead><tbody>
+<tr><td><a rel="external" href="https://github.com/rustunit/bevy_ios_alerts">bevy_ios_alerts</a></td><td><code>0.9</code></td></tr>
+<tr><td><a rel="external" href="https://github.com/rustunit/bevy_ios_gamecenter">bevy_ios_gamecenter</a></td><td><code>0.7</code></td></tr>
+<tr><td><a rel="external" href="https://github.com/rustunit/bevy_ios_notifications">bevy_ios_notifications</a></td><td><code>0.8</code></td></tr>
+<tr><td><a rel="external" href="https://github.com/rustunit/bevy_ios_review">bevy_ios_review</a></td><td><code>0.7</code></td></tr>
+<tr><td><a rel="external" href="https://github.com/rustunit/bevy_ios_safearea">bevy_ios_safearea</a></td><td><code>0.7</code></td></tr>
+<tr><td><a rel="external" href="https://github.com/rustunit/bevy_ios_iap">bevy_ios_iap</a></td><td><code>0.11</code> (unreleased)</td></tr>
+</tbody></table>
+<h1 id="conclusion">Conclusion</h1>
+<p>We did not change the public APIs much, <code>bevy_ios_notifications</code> is the exception here so check its changelog. If you are using any of these crates go and delete the SPM dependency from your xcode project and bump the rust one.</p>
+<p>Thanks to the <a rel="external" href="https://github.com/madsmtm/objc2">objc2</a> crate for making all of this possible. Adding an iOS crate to your bevy game is just <code>cargo add</code> now!</p>
+<hr />
+<p>Do you need support building your Bevy or Rust project? Our team of experts can support you! <a href="https://rustunit.com/contact/">Contact us.</a></p>
+
+    </div>
+</div>
+
+    <footer>
+        
+        <div class="links">
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.linkedin.com&#x2F;company&#x2F;rustunit&#x2F;" title="LinkedIn">
+                <img alt="LinkedIn" class="icon" src="https://rustunit.com/icons/linkedin.svg" />
+            </a>
+            
+            <a rel="me" href="&#x2F;contact" title="Contact">
+                <img alt="Contact" class="icon" src="https://rustunit.com/icons/mail.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;github.com&#x2F;rustunit" title="GitHub">
+                <img alt="GitHub" class="icon" src="https://rustunit.com/icons/github.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;www.youtube.com&#x2F;@rustunit_com" title="YouTube">
+                <img alt="YouTube" class="icon" src="https://rustunit.com/icons/youtube.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;mastodon.social&#x2F;@rustunit" title="Mastodon">
+                <img alt="Mastodon" class="icon" src="https://rustunit.com/icons/mastodon.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;bsky.app&#x2F;profile&#x2F;rustunit.com" title="Bsky">
+                <img alt="Bsky" class="icon" src="https://rustunit.com/icons/bsky.svg" />
+            </a>
+            
+            <a rel="me" href="https:&#x2F;&#x2F;discord.gg&#x2F;MHzmYHnnsE" title="Discord">
+                <img alt="Discord" class="icon" src="https://rustunit.com/icons/discord.svg" />
+            </a>
+            
+        </div>
+        
+
+        <div>Copyright © 2026 Rustunit</div>
+    </footer>
+</body>
+
+</html>

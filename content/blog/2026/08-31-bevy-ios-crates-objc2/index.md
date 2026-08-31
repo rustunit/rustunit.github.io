@@ -39,9 +39,7 @@ All of it is now [objc2](https://github.com/madsmtm/objc2) and its generated fra
 
 Mads Marquart, who maintains objc2, gave a talk about exactly this at our [Bevy Meetup #13](/bevy-meetup/bevy-meetup-13/#mads-marquart): *Bevy on iOS - in pure Rust*. Well worth a watch.
 
-Our existing [bevy_ios_app_delegate](https://github.com/rustunit/bevy_ios_app_delegate) crate was built that way already. Now all the other crates are too.
-
-> Our previous post on iOS deep-linking goes into detail on `bevy_ios_app_delegate` and what objc2 does for us there. You can find it [here](@/blog/2025/05-18-bevy-ios-deep-linking/index.md).
+> Our existing [bevy_ios_app_delegate](https://github.com/rustunit/bevy_ios_app_delegate) crate was built that way already. Our previous post on iOS deep-linking goes into detail [here](@/blog/2025/05-18-bevy-ios-deep-linking/index.md).
 
 Lets look at the smallest crate first. `bevy_ios_safearea` used to be four Swift functions like this one:
 

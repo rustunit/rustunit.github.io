@@ -1,9 +1,8 @@
 +++
 title = "Dropping Swift from our Bevy iOS crates"
-date = 2026-08-31
+date = 2026-08-04
 [extra]
 tags=["rust","bevy","mobile"] 
-hidden = true
 custom_summary = "We removed the Swift packages from our bevy_ios_* crates, installing them is just cargo add now."
 +++
 

@@ -96,6 +96,11 @@ main {
 }
 
 .apps {
+    $icon-size: 120px;
+    $icon-gap: 60px;
+    // Matches the iOS-style corner baked into the icon PNGs (229px of 1024px)
+    $icon-radius: $icon-size * 0.224;
+
     margin-top: 25px;
     text-align: center;
 
@@ -110,15 +115,82 @@ main {
         display: flex;
         justify-content: center;
         flex-wrap: wrap;
-        column-gap: 60px;
+        column-gap: $icon-gap;
         row-gap: 30px;
 
         .app {
             text-decoration: none;
+            // Fixed width so the row spans exactly the icons; labels overflow centered into the gap
+            width: $icon-size;
 
             img {
-                width: 120px;
+                width: $icon-size;
             }
+
+            div {
+                margin: 0 ($icon-gap * -0.5);
+            }
+        }
+    }
+
+    // Desktop game: Steam's landscape header capsule instead of a square app icon
+    .steam-game {
+        max-width: 3 * $icon-size + 2 * $icon-gap;
+        margin: 40px auto 0;
+
+        a {
+            text-decoration: none;
+        }
+
+        .capsule {
+            position: relative;
+            display: block;
+
+            > img {
+                display: block;
+                width: 100%;
+                height: auto;
+                border-radius: $icon-radius;
+            }
+        }
+
+        .steam-badge {
+            $inset: 14px;
+
+            position: absolute;
+            top: $inset;
+            right: $inset;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: $icon-radius - $inset;
+            background: rgba(23, 26, 33, 0.85);
+            font-size: 0.7rem;
+
+            img {
+                width: 16px;
+                height: 16px;
+            }
+
+            // Keep clear of the characters when the capsule shrinks
+            @media screen and (max-width: $break-small) {
+                top: 10px;
+                right: 10px;
+                gap: 4px;
+                padding: 3px 8px;
+                font-size: 0.55rem;
+
+                img {
+                    width: 12px;
+                    height: 12px;
+                }
+            }
+        }
+
+        .website {
+            display: block;
+            margin-top: 4px;
         }
     }
 }

@@ -9,6 +9,8 @@ theme = "material-theme-darker"
 
 [extra]
 year = 2026
+legal_name = "Stephan Dilly"
+vat = "BG181432595"
 links = [
     # { title = "Rotterdam, NL", url = "https://maps.app.goo.gl/vYh2kSC4BPaJymXDA", icon = "location-dot" },
     { title = "LinkedIn", url = "https://www.linkedin.com/company/rustunit/", icon = "linkedin" },
